@@ -2,8 +2,7 @@ import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { validationService } from "../services";
 import { useEditorContext } from "../state";
-import InsertMenu from "../Toolbar/InsertMenu";
-import VisibilitySelector from "../Toolbar/VisibilitySelector";
+import { AIMenu, InsertMenu, VisibilitySelector } from "../Toolbar";
 import type { EditorToolbarProps } from "../types";
 
 export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoName }) => {
@@ -34,6 +33,7 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoNa
           onToggleFocusMode={handleToggleFocusMode}
           memoName={memoName}
         />
+        <AIMenu />
       </div>
 
       <div className="flex flex-row justify-end items-center gap-2">

@@ -488,3 +488,12 @@ func (s *ConnectServiceHandler) DeleteIdentityProvider(ctx context.Context, req 
 	}
 	return connect.NewResponse(resp), nil
 }
+// AIService
+
+func (s *ConnectServiceHandler) ExecuteAIInstruction(ctx context.Context, req *connect.Request[v1pb.ExecuteAIInstructionRequest]) (*connect.Response[v1pb.ExecuteAIInstructionResponse], error) {
+	resp, err := s.APIV1Service.ExecuteAIInstruction(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}

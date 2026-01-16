@@ -1321,6 +1321,37 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - UserService
+            description: CreateUserNotification creates a notification for a user.
+            operationId: UserService_CreateUserNotification
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UserNotification'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserNotification'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/users/{user}/notifications/{notification}:
         delete:
             tags:
@@ -2975,6 +3006,7 @@ components:
                     enum:
                         - TYPE_UNSPECIFIED
                         - MEMO_COMMENT
+                        - SYSTEM
                     type: string
                     description: The type of the notification.
                     format: enum

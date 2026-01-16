@@ -22,9 +22,6 @@ const MainLayout = () => {
   const currentUser = useCurrentUser();
   const [profileUserName, setProfileUserName] = useState<string | undefined>();
 
-  const isHomePage = Boolean(matchPath(Routes.ROOT, location.pathname));
-  const showBottomEditor = isStandalone && !md && isHomePage;
-
   // Determine context based on current route
   const context: MemoExplorerContext = useMemo(() => {
     if (location.pathname === Routes.ROOT) return "home";
@@ -33,6 +30,11 @@ const MainLayout = () => {
     if (matchPath("/u/:username", location.pathname)) return "profile";
     return "home"; // fallback
   }, [location.pathname]);
+
+  const isHomePage = context === "home";
+  const showBottomEditor = isStandalone && !md && isHomePage;
+
+  // Determine context based on current route
 
   // Extract username from URL for profile context
   useEffect(() => {
@@ -94,8 +96,8 @@ const MainLayout = () => {
       </div>
 
       {showBottomEditor && (
-        <div className="fixed bottom-0 left-0 w-full px-4 py-3 bg-background/90 backdrop-blur-xl border-t border-border z-50 transition-all duration-300 ease-in-out shadow-[0_-8px_30px_rgb(0,0,0,0.12)] rounded-t-2xl">
-          <div className="w-full h-full pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed bottom-0 left-0 w-full px-4 py-3 bg-background/90 backdrop-blur-xl border-t border-border z-[9999] transition-all duration-300 ease-in-out shadow-[0_-8px_30px_rgb(0,0,0,0.12)] rounded-t-2xl">
+          <div className="w-full h-auto min-h-[44px] pb-[env(safe-area-inset-bottom)]">
             <MemoEditor className="!border-none !bg-transparent !shadow-none !px-0 !pt-0" cacheKey="pwa-bottom-editor" placeholder={t("editor.any-thoughts")} />
           </div>
         </div>

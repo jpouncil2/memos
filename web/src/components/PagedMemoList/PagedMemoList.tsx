@@ -8,6 +8,7 @@ import { useView } from "@/contexts/ViewContext";
 import { DEFAULT_LIST_MEMOS_PAGE_SIZE } from "@/helpers/consts";
 import { useInfiniteMemos } from "@/hooks/useMemoQueries";
 import { userKeys } from "@/hooks/useUserQueries";
+import { useMediaQuery, useStandaloneMode } from "@/hooks";
 import { Routes } from "@/router";
 import { State } from "@/types/proto/api/v1/common_pb";
 import type { Memo } from "@/types/proto/api/v1/memo_service_pb";
@@ -85,8 +86,12 @@ const PagedMemoList = (props: Props) => {
   const { layout } = useView();
   const queryClient = useQueryClient();
 
+  const md = useMediaQuery("md");
+  const isStandalone = useStandaloneMode();
+
   // Show memo editor only on the root route
-  const showMemoEditor = Boolean(matchPath(Routes.ROOT, window.location.pathname));
+  // In PWA mode on mobile, we hide the top editor since it's moved to the bottom bar in MainLayout
+  const showMemoEditor = Boolean(matchPath(Routes.ROOT, window.location.pathname)) && !(isStandalone && !md);
 
   // Use React Query's infinite query for pagination
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteMemos({

@@ -2,20 +2,28 @@ import { useEffect, useMemo, useState } from "react";
 import { matchPath, Outlet, useLocation } from "react-router-dom";
 import type { MemoExplorerContext } from "@/components/MemoExplorer";
 import { MemoExplorer, MemoExplorerDrawer } from "@/components/MemoExplorer";
+import MemoEditor from "@/components/MemoEditor";
 import MobileHeader from "@/components/MobileHeader";
 import { userServiceClient } from "@/connect";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFilteredMemoStats } from "@/hooks/useFilteredMemoStats";
 import useMediaQuery from "@/hooks/useMediaQuery";
+import useStandaloneMode from "@/hooks/useStandaloneMode";
 import { cn } from "@/lib/utils";
+import { useTranslate } from "@/utils/i18n";
 import { Routes } from "@/router";
 
 const MainLayout = () => {
   const md = useMediaQuery("md");
   const lg = useMediaQuery("lg");
+  const isStandalone = useStandaloneMode();
+  const t = useTranslate();
   const location = useLocation();
   const currentUser = useCurrentUser();
   const [profileUserName, setProfileUserName] = useState<string | undefined>();
+
+  const isHomePage = Boolean(matchPath(Routes.ROOT, location.pathname));
+  const showBottomEditor = isStandalone && !md && isHomePage;
 
   // Determine context based on current route
   const context: MemoExplorerContext = useMemo(() => {
@@ -80,10 +88,18 @@ const MainLayout = () => {
         </div>
       )}
       <div className={cn("w-full min-h-full", lg ? "pl-72" : md ? "pl-56" : "")}>
-        <div className={cn("w-full mx-auto px-4 sm:px-6 md:pt-6 pb-8")}>
+        <div className={cn("w-full mx-auto px-4 sm:px-6 md:pt-6 pb-24", showBottomEditor && "pb-32")}>
           <Outlet />
         </div>
       </div>
+
+      {showBottomEditor && (
+        <div className="fixed bottom-0 left-0 w-full px-4 py-3 bg-background/90 backdrop-blur-xl border-t border-border z-50 transition-all duration-300 ease-in-out shadow-[0_-8px_30px_rgb(0,0,0,0.12)] rounded-t-2xl">
+          <div className="w-full h-full pb-[env(safe-area-inset-bottom)]">
+            <MemoEditor className="!border-none !bg-transparent !shadow-none !px-0 !pt-0" cacheKey="pwa-bottom-editor" placeholder={t("editor.any-thoughts")} />
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -264,7 +264,8 @@ const TimelineView = ({ memoList, renderer, prefixElement }: TimelineViewProps) 
           return (
             <div
               key={`header-${item.dateStr}`}
-              className="sticky top-0 z-10 w-full pt-4 pb-2 bg-background/95 backdrop-blur-sm px-2 text-sm font-medium text-muted-foreground border-b mb-2"
+              className="sticky z-10 w-full pt-3 pb-2 bg-background backdrop-blur-lg px-2 text-sm font-medium text-muted-foreground border-b shadow-sm"
+              style={{ top: "var(--filters-offset, 120px)" }}
             >
               {item.title}
             </div>

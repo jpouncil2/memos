@@ -19,8 +19,8 @@ const MobileHeader = (props: Props) => {
   return (
     <div
       className={cn(
-        "sticky top-0 pt-3 pb-2 sm:pt-2 px-4 sm:px-6 sm:mb-1 bg-background bg-opacity-80 backdrop-blur-lg flex flex-row justify-between items-center w-full h-auto flex-nowrap shrink-0 z-30",
-        offsetTop > 0 && "shadow-md",
+        "sticky top-0 pt-3 pb-2 sm:pt-2 sm:pb-2 px-4 sm:px-6 bg-background backdrop-blur-lg flex flex-row justify-between items-center w-full h-auto flex-nowrap shrink-0 z-30 border-b",
+        offsetTop > 0 && "shadow-sm",
         className,
       )}
     >

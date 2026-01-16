@@ -43,6 +43,10 @@ export const editorActions = {
     type: "ADD_LOCAL_FILE",
     payload: file,
   }),
+  updateLocalFile: (previewUrl: string, patch: Partial<LocalFile>): EditorAction => ({
+    type: "UPDATE_LOCAL_FILE",
+    payload: { previewUrl, patch },
+  }),
 
   removeLocalFile: (previewUrl: string): EditorAction => ({
     type: "REMOVE_LOCAL_FILE",

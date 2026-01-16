@@ -12,7 +12,7 @@ import { convertVisibilityFromString } from "@/utils/memo";
 import { EditorContent, EditorMetadata, EditorToolbar, FocusModeExitButton, FocusModeOverlay } from "./components";
 import { FOCUS_MODE_STYLES } from "./constants";
 import type { EditorRefActions } from "./Editor";
-import { useAutoSave, useFocusMode, useKeyboard, useMemoInit } from "./hooks";
+import { useAutoSave, useFocusMode, useKeyboard, useMemoInit, useUploadManager } from "./hooks";
 import { cacheService, errorService, memoService, validationService } from "./services";
 import { EditorProvider, useEditorContext } from "./state";
 import type { MemoEditorProps } from "./types";
@@ -57,6 +57,9 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
   const defaultVisibility = userGeneralSetting?.memoVisibility ? convertVisibilityFromString(userGeneralSetting.memoVisibility) : undefined;
 
   useMemoInit(editorRef, memoName, cacheKey, currentUser?.name ?? "", autoFocus, defaultVisibility);
+
+  // Background upload management
+  useUploadManager();
 
   // Auto-save content to localStorage
   useAutoSave(state.content, currentUser?.name ?? "", cacheKey);

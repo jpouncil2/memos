@@ -13,12 +13,16 @@ export interface AttachmentItem {
   readonly sourceUrl: string;
   readonly size?: number;
   readonly isLocal: boolean;
+  readonly progress?: number; // 0 to 100
 }
 
 // For MemoEditor: local files being uploaded
 export interface LocalFile {
   readonly file: File;
   readonly previewUrl: string;
+  readonly progress?: number; // 0 to 100
+  readonly error?: string;
+  readonly attachment?: Attachment; // Keep the created attachment info here
 }
 
 function categorizeFile(mimeType: string): FileCategory {
@@ -43,21 +47,23 @@ export function attachmentToItem(attachment: Attachment): AttachmentItem {
   };
 }
 
-export function fileToItem(file: File, blobUrl: string): AttachmentItem {
+export function fileToItem(localFile: LocalFile): AttachmentItem {
+  const { file, previewUrl, progress } = localFile;
   return {
-    id: blobUrl,
+    id: previewUrl,
     filename: file.name,
     category: categorizeFile(file.type),
     mimeType: file.type,
-    thumbnailUrl: blobUrl,
-    sourceUrl: blobUrl,
+    thumbnailUrl: previewUrl,
+    sourceUrl: previewUrl,
     size: file.size,
     isLocal: true,
+    progress,
   };
 }
 
 export function toAttachmentItems(attachments: Attachment[], localFiles: LocalFile[] = []): AttachmentItem[] {
-  return [...attachments.map(attachmentToItem), ...localFiles.map(({ file, previewUrl }) => fileToItem(file, previewUrl))];
+  return [...attachments.map(attachmentToItem), ...localFiles.map((f) => fileToItem(f))];
 }
 
 export function filterByCategory(items: AttachmentItem[], categories: FileCategory[]): AttachmentItem[] {

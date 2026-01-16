@@ -223,6 +223,14 @@ func (s *ConnectServiceHandler) UpdateUserNotification(ctx context.Context, req 
 	return connect.NewResponse(resp), nil
 }
 
+func (s *ConnectServiceHandler) CreateUserNotification(ctx context.Context, req *connect.Request[v1pb.CreateUserNotificationRequest]) (*connect.Response[v1pb.UserNotification], error) {
+	resp, err := s.APIV1Service.CreateUserNotification(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 func (s *ConnectServiceHandler) DeleteUserNotification(ctx context.Context, req *connect.Request[v1pb.DeleteUserNotificationRequest]) (*connect.Response[emptypb.Empty], error) {
 	resp, err := s.APIV1Service.DeleteUserNotification(ctx, req.Msg)
 	if err != nil {

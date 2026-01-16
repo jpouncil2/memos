@@ -151,6 +151,15 @@ service UserService {
     option (google.api.method_signature) = "notification,update_mask";
   }
 
+  // CreateUserNotification creates a notification for a user.
+  rpc CreateUserNotification(CreateUserNotificationRequest) returns (UserNotification) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=users/*}/notifications"
+      body: "notification"
+    };
+    option (google.api.method_signature) = "parent,notification";
+  }
+
   // DeleteUserNotification deletes a notification.
   rpc DeleteUserNotification(DeleteUserNotificationRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/api/v1/{name=users/*/notifications/*}"};
@@ -641,7 +650,20 @@ message UserNotification {
   enum Type {
     TYPE_UNSPECIFIED = 0;
     MEMO_COMMENT = 1;
+    SYSTEM = 2;
   }
+}
+
+message CreateUserNotificationRequest {
+  // Required. The parent user resource.
+  // Format: users/{user}
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api.v1/User"}
+  ];
+
+  // Required. The notification to create.
+  UserNotification notification = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListUserNotificationsRequest {

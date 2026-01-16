@@ -1219,6 +1219,11 @@ export enum UserNotification_Type {
    * @generated from enum value: MEMO_COMMENT = 1;
    */
   MEMO_COMMENT = 1,
+
+  /**
+   * @generated from enum value: SYSTEM = 2;
+   */
+  SYSTEM = 2,
 }
 
 /**

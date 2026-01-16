@@ -37,7 +37,7 @@ const MobileTagFilters = () => {
             ref={containerRef}
             className={cn(
                 "sticky z-20 w-full flex flex-row items-center justify-start gap-2 overflow-x-auto",
-                "hide-scrollbar px-4 py-2 bg-background backdrop-blur-lg border-b shadow-sm",
+                "hide-scrollbar px-4 py-2 bg-background backdrop-blur-lg shadow-sm",
             )}
             style={{ top: "var(--mobile-header-height, 60px)" }}
         >

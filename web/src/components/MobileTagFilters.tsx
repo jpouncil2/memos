@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useMemoFilterContext } from "@/contexts/MemoFilterContext";
 import { useFilteredMemoStats } from "@/hooks/useFilteredMemoStats";
 import useStandaloneMode from "@/hooks/useStandaloneMode";
@@ -10,16 +10,53 @@ const MobileTagFilters = () => {
     const { filters, addFilter, removeFilter } = useMemoFilterContext();
     const containerRef = useRef<HTMLDivElement>(null);
 
-    if (!isStandalone) {
-        return null;
-    }
-
     // Tags is a Record<string, number>, convert to array and sort by count/name
     const sortedTags = Object.entries(tags)
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
         .map(([tag]) => tag);
 
-    if (sortedTags.length === 0) {
+    const shouldRender = isStandalone && sortedTags.length > 0;
+
+    useLayoutEffect(() => {
+        if (typeof document === "undefined") {
+            return;
+        }
+
+        const root = document.documentElement;
+
+        if (!shouldRender) {
+            root.style.setProperty("--mobile-tag-filters-height", "0px");
+            return;
+        }
+
+        const node = containerRef.current;
+        if (!node) {
+            root.style.setProperty("--mobile-tag-filters-height", "0px");
+            return;
+        }
+
+        const updateHeight = () => {
+            root.style.setProperty("--mobile-tag-filters-height", `${node.getBoundingClientRect().height}px`);
+        };
+
+        updateHeight();
+
+        if (typeof ResizeObserver === "undefined") {
+            return () => {
+                root.style.setProperty("--mobile-tag-filters-height", "0px");
+            };
+        }
+
+        const observer = new ResizeObserver(updateHeight);
+        observer.observe(node);
+
+        return () => {
+            observer.disconnect();
+            root.style.setProperty("--mobile-tag-filters-height", "0px");
+        };
+    }, [shouldRender]);
+
+    if (!shouldRender) {
         return null;
     }
 
@@ -39,7 +76,7 @@ const MobileTagFilters = () => {
                 "sticky z-20 w-full flex flex-row items-center justify-start gap-2 overflow-x-auto",
                 "hide-scrollbar px-4 py-2 bg-background backdrop-blur-lg shadow-sm",
             )}
-            style={{ top: "var(--mobile-header-height, 60px)" }}
+            style={{ top: "var(--mobile-header-height, 0px)" }}
         >
             {sortedTags.map((tag) => {
                 const isSelected = filters.some((f) => f.factor === "tagSearch" && f.value === tag);

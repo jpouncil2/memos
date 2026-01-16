@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { ArrowUpIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { matchPath } from "react-router-dom";
@@ -157,19 +158,34 @@ const PagedMemoList = (props: Props) => {
         <Skeleton showCreator={props.showCreator} count={4} />
       ) : (
         <>
-          <MasonryView
-            memoList={sortedMemoList}
-            renderer={props.renderer}
-            prefixElement={
-              <>
-                {showMemoEditor ? (
-                  <MemoEditor className="mb-2" cacheKey="home-memo-editor" placeholder={t("editor.any-thoughts")} />
-                ) : undefined}
-                <MemoFilters />
-              </>
-            }
-            listMode={layout === "LIST"}
-          />
+          {layout === "LIST" ? (
+            <TimelineView
+              memoList={sortedMemoList}
+              renderer={props.renderer}
+              prefixElement={
+                <>
+                  {showMemoEditor ? (
+                    <MemoEditor className="mb-2" cacheKey="home-memo-editor" placeholder={t("editor.any-thoughts")} />
+                  ) : undefined}
+                  <MemoFilters />
+                </>
+              }
+            />
+          ) : (
+            <MasonryView
+              memoList={sortedMemoList}
+              renderer={props.renderer}
+              prefixElement={
+                <>
+                  {showMemoEditor ? (
+                    <MemoEditor className="mb-2" cacheKey="home-memo-editor" placeholder={t("editor.any-thoughts")} />
+                  ) : undefined}
+                  <MemoFilters />
+                </>
+              }
+              listMode={false} // Explicitly false for grid view, though MasonryView might not check strict boolean if it uses columns prop
+            />
+          )}
 
           {/* Loading indicator for pagination */}
           {isFetchingNextPage && <Skeleton showCreator={props.showCreator} count={2} />}
@@ -195,6 +211,73 @@ const PagedMemoList = (props: Props) => {
   );
 
   return children;
+};
+
+interface TimelineViewProps {
+  memoList: Memo[];
+  renderer: (memo: Memo, context?: MemoRenderContext) => JSX.Element;
+  prefixElement?: JSX.Element;
+}
+
+const TimelineView = ({ memoList, renderer, prefixElement }: TimelineViewProps) => {
+  const groupedItems = useMemo(() => {
+    const items: ({ type: "header"; dateStr: string; title: string } | { type: "memo"; memo: Memo })[] = [];
+    let lastDateStr = "";
+
+    memoList.forEach((memo) => {
+      const displayTime = memo.displayTime;
+      if (!displayTime) {
+        items.push({ type: "memo", memo });
+        return;
+      }
+
+      // Format date as YYYY-MM-DD for grouping
+      const date = dayjs(Number(displayTime.seconds) * 1000);
+      const dateStr = date.format("YYYY-MM-DD");
+
+      if (dateStr !== lastDateStr) {
+        let title = date.format("dddd, MMMM D, YYYY");
+        const today = dayjs();
+        if (date.isSame(today, "day")) {
+          title = "Today";
+        } else if (date.isSame(today.subtract(1, "day"), "day")) {
+          title = "Yesterday";
+        }
+
+        items.push({ type: "header", dateStr, title });
+        lastDateStr = dateStr;
+      }
+
+      items.push({ type: "memo", memo });
+    });
+
+    return items;
+  }, [memoList]);
+
+  return (
+    <div className="w-full flex flex-col gap-2">
+      {prefixElement}
+      {groupedItems.map((item) => {
+        if (item.type === "header") {
+          return (
+            <div
+              key={`header-${item.dateStr}`}
+              className="sticky top-0 z-10 w-full pt-4 pb-2 bg-background/95 backdrop-blur-sm px-2 text-sm font-medium text-muted-foreground border-b mb-2"
+            >
+              {item.title}
+            </div>
+          );
+        }
+        // Memo item
+        // Note: MasonryView wraps items in a div, we might need similar spacing
+        return (
+          <div key={item.memo.name} className="w-full">
+            {renderer(item.memo, { compact: false, columns: 1 })}
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 const BackToTop = () => {

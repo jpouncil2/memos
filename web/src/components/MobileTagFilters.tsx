@@ -36,10 +36,10 @@ const MobileTagFilters = () => {
         <div
             ref={containerRef}
             className={cn(
-                "sticky top-0 z-20 w-full flex flex-row items-center justify-start gap-2 overflow-x-auto",
+                "sticky z-20 w-full flex flex-row items-center justify-start gap-2 overflow-x-auto",
                 "hide-scrollbar px-2 py-3 bg-background/95 backdrop-blur-sm border-b",
-                // Visual tweaks to match the requested look
             )}
+            style={{ top: "var(--mobile-header-height, 60px)" }}
         >
             {sortedTags.map((tag) => {
                 const isSelected = filters.some((f) => f.factor === "tagSearch" && f.value === tag);

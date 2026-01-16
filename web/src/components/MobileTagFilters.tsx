@@ -14,8 +14,8 @@ const MobileTagFilters = () => {
         return null;
     }
 
-    // Tags is a Map<string, number>, convert to array and sort by count/name
-    const sortedTags = (Array.from(tags.entries()) as [string, number][])
+    // Tags is a Record<string, number>, convert to array and sort by count/name
+    const sortedTags = Object.entries(tags)
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
         .map(([tag]) => tag);
 

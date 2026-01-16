@@ -179,6 +179,7 @@ const PagedMemoList = (props: Props) => {
               renderer={props.renderer}
               prefixElement={
                 <>
+                  <MobileTagFilters />
                   {showMemoEditor ? (
                     <MemoEditor className="mb-2" cacheKey="home-memo-editor" placeholder={t("editor.any-thoughts")} />
                   ) : undefined}

@@ -14,6 +14,7 @@ import { Routes } from "@/router";
 import { State } from "@/types/proto/api/v1/common_pb";
 import type { Memo } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import MobileTagFilters from "../MobileTagFilters";
 import Empty from "../Empty";
 import type { MemoRenderContext } from "../MasonryView";
 import MasonryView from "../MasonryView";
@@ -164,6 +165,7 @@ const PagedMemoList = (props: Props) => {
               renderer={props.renderer}
               prefixElement={
                 <>
+                  <MobileTagFilters />
                   {showMemoEditor ? (
                     <MemoEditor className="mb-2" cacheKey="home-memo-editor" placeholder={t("editor.any-thoughts")} />
                   ) : undefined}

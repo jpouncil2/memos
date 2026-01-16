@@ -78,22 +78,25 @@ const MainLayout = () => {
   const { statistics, tags } = useFilteredMemoStats({ userName: statsUserName });
 
   return (
-    <section className="@container w-full min-h-full flex flex-col justify-start items-center">
-      {!md && (
-        <MobileHeader>
-          <MemoExplorerDrawer context={context} statisticsData={statistics} tagCount={tags} />
-        </MobileHeader>
-      )}
-      {md && (
-        <div className={cn("fixed top-0 left-16 shrink-0 h-svh transition-all", "border-r border-border", lg ? "w-72" : "w-56")}>
-          <MemoExplorer className={cn("px-3 py-6")} context={context} statisticsData={statistics} tagCount={tags} />
+    <>
+      <section className="@container w-full min-h-full flex flex-col justify-start items-center">
+        {!md && (
+          <MobileHeader>
+            <MemoExplorerDrawer context={context} statisticsData={statistics} tagCount={tags} />
+          </MobileHeader>
+        )}
+        {md && (
+          <div className={cn("fixed top-0 left-16 shrink-0 h-svh transition-all", "border-r border-border", lg ? "w-72" : "w-56")}>
+            <MemoExplorer className={cn("px-3 py-6")} context={context} statisticsData={statistics} tagCount={tags} />
+          </div>
+        )}
+        <div className={cn("w-full min-h-full", lg ? "pl-72" : md ? "pl-56" : "")}>
+          <div className={cn("w-full mx-auto px-4 sm:px-6 md:pt-6 pb-24", showBottomEditor && "pb-32")}>
+            <Outlet />
+          </div>
         </div>
-      )}
-      <div className={cn("w-full min-h-full", lg ? "pl-72" : md ? "pl-56" : "")}>
-        <div className={cn("w-full mx-auto px-4 sm:px-6 md:pt-6 pb-24", showBottomEditor && "pb-32")}>
-          <Outlet />
-        </div>
-      </div>
+
+      </section>
 
       {showBottomEditor && (
         <div className="fixed bottom-0 left-0 w-full px-4 py-3 bg-background/90 backdrop-blur-xl border-t border-border z-[9999] transition-all duration-300 ease-in-out shadow-[0_-8px_30px_rgb(0,0,0,0.12)] rounded-t-2xl">
@@ -102,7 +105,7 @@ const MainLayout = () => {
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 };
 

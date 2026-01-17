@@ -99,8 +99,8 @@ const MainLayout = () => {
       </section>
 
       {showBottomEditor && (
-        <div className="fixed bottom-0 left-0 w-full px-4 py-3 bg-background/90 backdrop-blur-xl border-t border-border z-[9999] transition-all duration-300 ease-in-out shadow-[0_-8px_30px_rgb(0,0,0,0.12)] rounded-t-2xl">
-          <div className="w-full h-auto min-h-[44px] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed bottom-0 left-0 right-0 z-[9999] px-4 transition-all duration-300 ease-in-out">
+          <div className="w-full rounded-2xl border border-border bg-background/90 backdrop-blur-xl shadow-[0_-8px_30px_rgb(0,0,0,0.12)] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <MemoEditor className="!border-none !bg-transparent !shadow-none !px-0 !pt-0" cacheKey="pwa-bottom-editor" placeholder={t("editor.any-thoughts")} />
           </div>
         </div>

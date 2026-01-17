@@ -99,9 +99,12 @@ const MainLayout = () => {
       </section>
 
       {showBottomEditor && (
-        <div className="fixed bottom-0 left-0 right-0 z-[9999] px-4 transition-all duration-300 ease-in-out">
-          <div className="w-full rounded-2xl border border-border bg-background/90 backdrop-blur-xl shadow-[0_-8px_30px_rgb(0,0,0,0.12)] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] left-0 right-0 z-[9999] px-4 transition-all duration-300 ease-in-out">
+          <div className="w-full rounded-2xl border border-border bg-background/90 backdrop-blur-xl shadow-[0_-8px_30px_rgb(0,0,0,0.12)] px-4 pt-3 pb-3">
             <MemoEditor className="!border-none !bg-transparent !shadow-none !px-0 !pt-0" cacheKey="pwa-bottom-editor" placeholder={t("editor.any-thoughts")} />
+            <p className="mt-2 text-center text-[11px] leading-tight text-muted-foreground/70">
+              Focus, Attention, Awareness, Imagination and Visalization.
+            </p>
           </div>
         </div>
       )}

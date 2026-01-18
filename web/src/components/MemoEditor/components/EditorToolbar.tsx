@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { validationService } from "../services";
 import { useEditorContext } from "../state";
-import { InsertMenu, VisibilitySelector } from "../Toolbar";
+import { InsertMenu } from "../Toolbar";
 import type { EditorToolbarProps } from "../types";
 
 export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoName }) => {
@@ -21,10 +21,6 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoNa
     dispatch(actions.toggleFocusMode());
   };
 
-  const handleVisibilityChange = (visibility: typeof state.metadata.visibility) => {
-    dispatch(actions.setMetadata({ visibility }));
-  };
-
   return (
     <div className="w-full flex flex-row items-center justify-between gap-2 mt-2">
       <InsertMenu
@@ -36,8 +32,6 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoNa
       />
 
       <div className="flex flex-row justify-end items-center gap-2">
-        <VisibilitySelector value={state.metadata.visibility} onChange={handleVisibilityChange} />
-
         {onCancel && (
           <Button variant="ghost" onClick={onCancel} disabled={isSaving}>
             Cancel

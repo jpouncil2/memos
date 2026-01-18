@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { memoKeys } from "@/hooks/useMemoQueries";
-import type { Visibility } from "@/types/proto/api/v1/memo_service_pb";
+import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import type { EditorRefActions } from "../Editor";
 import { cacheService, memoService } from "../services";
 import { useEditorContext } from "../state";
@@ -33,6 +33,8 @@ export const useMemoInit = (
 
           // Load existing memo
           const loadedState = await memoService.load(memoName);
+          // Force private visibility for now
+          loadedState.metadata.visibility = Visibility.PRIVATE;
           dispatch(
             actions.initMemo({
               content: loadedState.content,

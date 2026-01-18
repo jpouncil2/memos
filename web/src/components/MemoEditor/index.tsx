@@ -8,7 +8,7 @@ import { userKeys } from "@/hooks/useUserQueries";
 import { handleError } from "@/lib/error";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
-import { convertVisibilityFromString } from "@/utils/memo";
+import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import { EditorContent, EditorMetadata, EditorToolbar, FocusModeExitButton, FocusModeOverlay } from "./components";
 import { FOCUS_MODE_STYLES } from "./constants";
 import type { EditorRefActions } from "./Editor";
@@ -53,8 +53,8 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
   const { state, actions, dispatch } = useEditorContext();
   const { userGeneralSetting } = useAuth();
 
-  // Get default visibility from user settings
-  const defaultVisibility = userGeneralSetting?.memoVisibility ? convertVisibilityFromString(userGeneralSetting.memoVisibility) : undefined;
+  // Force private visibility for now
+  const defaultVisibility = Visibility.PRIVATE;
 
   useMemoInit(editorRef, memoName, cacheKey, currentUser?.name ?? "", autoFocus, defaultVisibility);
 
@@ -135,7 +135,7 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
       */}
       <div
         className={cn(
-          "group relative w-full flex flex-col justify-between items-start bg-card px-4 pt-3 pb-1 rounded-lg border border-border gap-2",
+          "group relative w-full flex flex-col justify-between items-start bg-card px-3 py-2 rounded-lg border border-border gap-1.5",
           FOCUS_MODE_STYLES.transition,
           state.ui.isFocusMode && cn(FOCUS_MODE_STYLES.container.base, FOCUS_MODE_STYLES.container.spacing),
           className,

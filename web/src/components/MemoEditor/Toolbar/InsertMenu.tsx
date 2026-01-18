@@ -1,7 +1,8 @@
 import { LatLng } from "leaflet";
 import { uniqBy } from "lodash-es";
 import { FileIcon, LinkIcon, LoaderIcon, MapPinIcon, Maximize2Icon, MoreHorizontalIcon, PlusIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import { useDebounce } from "react-use";
 import { useReverseGeocoding } from "@/components/map";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
   DropdownMenuTrigger,
   useDropdownMenuSubHoverDelay,
 } from "@/components/ui/dropdown-menu";
+import { useExecuteAIInstruction } from "@/hooks/useAI";
 import type { MemoRelation } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { LinkMemoDialog, LocationDialog } from "../components";
@@ -30,6 +32,7 @@ const InsertMenu = (props: InsertMenuProps) => {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [moreSubmenuOpen, setMoreSubmenuOpen] = useState(false);
+  const aiInstruction = useExecuteAIInstruction();
 
   const { handleTriggerEnter, handleTriggerLeave, handleContentEnter, handleContentLeave } = useDropdownMenuSubHoverDelay(
     150,
@@ -71,6 +74,31 @@ const InsertMenu = (props: InsertMenuProps) => {
   }, [displayName]);
 
   const isUploading = selectingFlag || props.isUploading;
+  const isAiLoading = aiInstruction.isPending;
+  const isBusy = isUploading || isAiLoading;
+
+  const handleAIAction = async (instruction: string) => {
+    if (!state.content) {
+      toast.error("Add some content first");
+      return;
+    }
+    try {
+      await aiInstruction.mutateAsync({ instruction, content: state.content });
+    } catch (error: any) {
+      toast.error(error?.message || "AI failed to process");
+    }
+  };
+
+  const aiItems = useMemo(
+    () => [
+      { label: "Summarize", instruction: "Summarize this note briefly." },
+      { label: "Refine writing", instruction: "Fix grammar and improve the writing style." },
+      { label: "Shorten", instruction: "Make this note more concise." },
+      { label: "Expand", instruction: "Extend this note with more relevant details." },
+      { label: "Translate to English", instruction: "Translate this note to English." },
+    ],
+    [],
+  );
 
   const handleLocationClick = () => {
     setLocationDialogOpen(true);
@@ -109,8 +137,8 @@ const InsertMenu = (props: InsertMenuProps) => {
     <>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="shadow-none" disabled={isUploading}>
-            {isUploading ? <LoaderIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
+          <Button variant="outline" size="icon" className="shadow-none" disabled={isBusy}>
+            {isBusy ? <LoaderIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
@@ -126,6 +154,19 @@ const InsertMenu = (props: InsertMenuProps) => {
             <MapPinIcon className="w-4 h-4" />
             {t("tooltip.select-location")}
           </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <MoreHorizontalIcon className="w-4 h-4" />
+              AI
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              {aiItems.map((item) => (
+                <DropdownMenuItem key={item.label} onClick={() => handleAIAction(item.instruction)} disabled={isAiLoading}>
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           {/* View submenu with Focus Mode */}
           <DropdownMenuSub open={moreSubmenuOpen} onOpenChange={setMoreSubmenuOpen}>
             <DropdownMenuSubTrigger onPointerEnter={handleTriggerEnter} onPointerLeave={handleTriggerLeave}>

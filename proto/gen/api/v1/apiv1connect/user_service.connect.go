@@ -86,6 +86,9 @@ const (
 	// UserServiceUpdateUserNotificationProcedure is the fully-qualified name of the UserService's
 	// UpdateUserNotification RPC.
 	UserServiceUpdateUserNotificationProcedure = "/memos.api.v1.UserService/UpdateUserNotification"
+	// UserServiceCreateUserNotificationProcedure is the fully-qualified name of the UserService's
+	// CreateUserNotification RPC.
+	UserServiceCreateUserNotificationProcedure = "/memos.api.v1.UserService/CreateUserNotification"
 	// UserServiceDeleteUserNotificationProcedure is the fully-qualified name of the UserService's
 	// DeleteUserNotification RPC.
 	UserServiceDeleteUserNotificationProcedure = "/memos.api.v1.UserService/DeleteUserNotification"
@@ -136,6 +139,8 @@ type UserServiceClient interface {
 	ListUserNotifications(context.Context, *connect.Request[v1.ListUserNotificationsRequest]) (*connect.Response[v1.ListUserNotificationsResponse], error)
 	// UpdateUserNotification updates a notification.
 	UpdateUserNotification(context.Context, *connect.Request[v1.UpdateUserNotificationRequest]) (*connect.Response[v1.UserNotification], error)
+	// CreateUserNotification creates a notification for a user.
+	CreateUserNotification(context.Context, *connect.Request[v1.CreateUserNotificationRequest]) (*connect.Response[v1.UserNotification], error)
 	// DeleteUserNotification deletes a notification.
 	DeleteUserNotification(context.Context, *connect.Request[v1.DeleteUserNotificationRequest]) (*connect.Response[emptypb.Empty], error)
 }
@@ -265,6 +270,12 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("UpdateUserNotification")),
 			connect.WithClientOptions(opts...),
 		),
+		createUserNotification: connect.NewClient[v1.CreateUserNotificationRequest, v1.UserNotification](
+			httpClient,
+			baseURL+UserServiceCreateUserNotificationProcedure,
+			connect.WithSchema(userServiceMethods.ByName("CreateUserNotification")),
+			connect.WithClientOptions(opts...),
+		),
 		deleteUserNotification: connect.NewClient[v1.DeleteUserNotificationRequest, emptypb.Empty](
 			httpClient,
 			baseURL+UserServiceDeleteUserNotificationProcedure,
@@ -295,6 +306,7 @@ type userServiceClient struct {
 	deleteUserWebhook         *connect.Client[v1.DeleteUserWebhookRequest, emptypb.Empty]
 	listUserNotifications     *connect.Client[v1.ListUserNotificationsRequest, v1.ListUserNotificationsResponse]
 	updateUserNotification    *connect.Client[v1.UpdateUserNotificationRequest, v1.UserNotification]
+	createUserNotification    *connect.Client[v1.CreateUserNotificationRequest, v1.UserNotification]
 	deleteUserNotification    *connect.Client[v1.DeleteUserNotificationRequest, emptypb.Empty]
 }
 
@@ -393,6 +405,11 @@ func (c *userServiceClient) UpdateUserNotification(ctx context.Context, req *con
 	return c.updateUserNotification.CallUnary(ctx, req)
 }
 
+// CreateUserNotification calls memos.api.v1.UserService.CreateUserNotification.
+func (c *userServiceClient) CreateUserNotification(ctx context.Context, req *connect.Request[v1.CreateUserNotificationRequest]) (*connect.Response[v1.UserNotification], error) {
+	return c.createUserNotification.CallUnary(ctx, req)
+}
+
 // DeleteUserNotification calls memos.api.v1.UserService.DeleteUserNotification.
 func (c *userServiceClient) DeleteUserNotification(ctx context.Context, req *connect.Request[v1.DeleteUserNotificationRequest]) (*connect.Response[emptypb.Empty], error) {
 	return c.deleteUserNotification.CallUnary(ctx, req)
@@ -443,6 +460,8 @@ type UserServiceHandler interface {
 	ListUserNotifications(context.Context, *connect.Request[v1.ListUserNotificationsRequest]) (*connect.Response[v1.ListUserNotificationsResponse], error)
 	// UpdateUserNotification updates a notification.
 	UpdateUserNotification(context.Context, *connect.Request[v1.UpdateUserNotificationRequest]) (*connect.Response[v1.UserNotification], error)
+	// CreateUserNotification creates a notification for a user.
+	CreateUserNotification(context.Context, *connect.Request[v1.CreateUserNotificationRequest]) (*connect.Response[v1.UserNotification], error)
 	// DeleteUserNotification deletes a notification.
 	DeleteUserNotification(context.Context, *connect.Request[v1.DeleteUserNotificationRequest]) (*connect.Response[emptypb.Empty], error)
 }
@@ -568,6 +587,12 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("UpdateUserNotification")),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceCreateUserNotificationHandler := connect.NewUnaryHandler(
+		UserServiceCreateUserNotificationProcedure,
+		svc.CreateUserNotification,
+		connect.WithSchema(userServiceMethods.ByName("CreateUserNotification")),
+		connect.WithHandlerOptions(opts...),
+	)
 	userServiceDeleteUserNotificationHandler := connect.NewUnaryHandler(
 		UserServiceDeleteUserNotificationProcedure,
 		svc.DeleteUserNotification,
@@ -614,6 +639,8 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 			userServiceListUserNotificationsHandler.ServeHTTP(w, r)
 		case UserServiceUpdateUserNotificationProcedure:
 			userServiceUpdateUserNotificationHandler.ServeHTTP(w, r)
+		case UserServiceCreateUserNotificationProcedure:
+			userServiceCreateUserNotificationHandler.ServeHTTP(w, r)
 		case UserServiceDeleteUserNotificationProcedure:
 			userServiceDeleteUserNotificationHandler.ServeHTTP(w, r)
 		default:
@@ -699,6 +726,10 @@ func (UnimplementedUserServiceHandler) ListUserNotifications(context.Context, *c
 
 func (UnimplementedUserServiceHandler) UpdateUserNotification(context.Context, *connect.Request[v1.UpdateUserNotificationRequest]) (*connect.Response[v1.UserNotification], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.UserService.UpdateUserNotification is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) CreateUserNotification(context.Context, *connect.Request[v1.CreateUserNotificationRequest]) (*connect.Response[v1.UserNotification], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.UserService.CreateUserNotification is not implemented"))
 }
 
 func (UnimplementedUserServiceHandler) DeleteUserNotification(context.Context, *connect.Request[v1.DeleteUserNotificationRequest]) (*connect.Response[emptypb.Empty], error) {

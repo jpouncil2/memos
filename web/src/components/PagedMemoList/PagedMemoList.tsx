@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { ArrowUpIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { matchPath } from "react-router-dom";
@@ -8,10 +9,12 @@ import { useView } from "@/contexts/ViewContext";
 import { DEFAULT_LIST_MEMOS_PAGE_SIZE } from "@/helpers/consts";
 import { useInfiniteMemos } from "@/hooks/useMemoQueries";
 import { userKeys } from "@/hooks/useUserQueries";
+import { useMediaQuery, useStandaloneMode } from "@/hooks";
 import { Routes } from "@/router";
 import { State } from "@/types/proto/api/v1/common_pb";
 import type { Memo } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import MobileTagFilters from "../MobileTagFilters";
 import Empty from "../Empty";
 import type { MemoRenderContext } from "../MasonryView";
 import MasonryView from "../MasonryView";
@@ -85,8 +88,12 @@ const PagedMemoList = (props: Props) => {
   const { layout } = useView();
   const queryClient = useQueryClient();
 
+  const md = useMediaQuery("md");
+  const isStandalone = useStandaloneMode();
+
   // Show memo editor only on the root route
-  const showMemoEditor = Boolean(matchPath(Routes.ROOT, window.location.pathname));
+  // In PWA mode on mobile, we hide the top editor since it's moved to the bottom bar in MainLayout
+  const showMemoEditor = Boolean(matchPath(Routes.ROOT, window.location.pathname)) && !(isStandalone && !md);
 
   // Use React Query's infinite query for pagination
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteMemos({
@@ -152,19 +159,36 @@ const PagedMemoList = (props: Props) => {
         <Skeleton showCreator={props.showCreator} count={4} />
       ) : (
         <>
-          <MasonryView
-            memoList={sortedMemoList}
-            renderer={props.renderer}
-            prefixElement={
-              <>
-                {showMemoEditor ? (
-                  <MemoEditor className="mb-2" cacheKey="home-memo-editor" placeholder={t("editor.any-thoughts")} />
-                ) : undefined}
-                <MemoFilters />
-              </>
-            }
-            listMode={layout === "LIST"}
-          />
+          {layout === "LIST" ? (
+            <TimelineView
+              memoList={sortedMemoList}
+              renderer={props.renderer}
+              prefixElement={
+                <>
+                  <MobileTagFilters />
+                  {showMemoEditor ? (
+                    <MemoEditor className="mb-2" cacheKey="home-memo-editor" placeholder={t("editor.any-thoughts")} />
+                  ) : undefined}
+                  <MemoFilters />
+                </>
+              }
+            />
+          ) : (
+            <MasonryView
+              memoList={sortedMemoList}
+              renderer={props.renderer}
+              prefixElement={
+                <>
+                  <MobileTagFilters />
+                  {showMemoEditor ? (
+                    <MemoEditor className="mb-2" cacheKey="home-memo-editor" placeholder={t("editor.any-thoughts")} />
+                  ) : undefined}
+                  <MemoFilters />
+                </>
+              }
+              listMode={false} // Explicitly false for grid view, though MasonryView might not check strict boolean if it uses columns prop
+            />
+          )}
 
           {/* Loading indicator for pagination */}
           {isFetchingNextPage && <Skeleton showCreator={props.showCreator} count={2} />}
@@ -190,6 +214,74 @@ const PagedMemoList = (props: Props) => {
   );
 
   return children;
+};
+
+interface TimelineViewProps {
+  memoList: Memo[];
+  renderer: (memo: Memo, context?: MemoRenderContext) => JSX.Element;
+  prefixElement?: JSX.Element;
+}
+
+const TimelineView = ({ memoList, renderer, prefixElement }: TimelineViewProps) => {
+  const groupedItems = useMemo(() => {
+    const items: ({ type: "header"; dateStr: string; title: string } | { type: "memo"; memo: Memo })[] = [];
+    let lastDateStr = "";
+
+    memoList.forEach((memo) => {
+      const displayTime = memo.displayTime;
+      if (!displayTime) {
+        items.push({ type: "memo", memo });
+        return;
+      }
+
+      // Format date as YYYY-MM-DD for grouping
+      const date = dayjs(Number(displayTime.seconds) * 1000);
+      const dateStr = date.format("YYYY-MM-DD");
+
+      if (dateStr !== lastDateStr) {
+        let title = date.format("dddd, MMMM D, YYYY");
+        const today = dayjs();
+        if (date.isSame(today, "day")) {
+          title = "Today";
+        } else if (date.isSame(today.subtract(1, "day"), "day")) {
+          title = "Yesterday";
+        }
+
+        items.push({ type: "header", dateStr, title });
+        lastDateStr = dateStr;
+      }
+
+      items.push({ type: "memo", memo });
+    });
+
+    return items;
+  }, [memoList]);
+
+  return (
+    <div className="w-full flex flex-col gap-2">
+      {prefixElement}
+      {groupedItems.map((item) => {
+        if (item.type === "header") {
+          return (
+            <div
+              key={`header-${item.dateStr}`}
+              className="sticky z-10 w-full py-2 bg-background backdrop-blur-lg px-4 text-sm font-medium text-muted-foreground shadow-sm"
+              style={{ top: "calc(var(--mobile-header-height, 0px) + var(--mobile-tag-filters-height, 0px))" }}
+            >
+              {item.title}
+            </div>
+          );
+        }
+        // Memo item
+        // Note: MasonryView wraps items in a div, we might need similar spacing
+        return (
+          <div key={item.memo.name} className="w-full">
+            {renderer(item.memo, { compact: false, columns: 1 })}
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 const BackToTop = () => {

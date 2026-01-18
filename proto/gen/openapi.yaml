@@ -69,6 +69,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/execute:
+        post:
+            tags:
+                - AIService
+            description: ExecuteAIInstruction executes an AI instruction on a memo or free-form text.
+            operationId: AIService_ExecuteAIInstruction
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ExecuteAIInstructionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ExecuteAIInstructionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/attachments:
         get:
             tags:
@@ -1296,6 +1321,37 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - UserService
+            description: CreateUserNotification creates a notification for a user.
+            operationId: UserService_CreateUserNotification
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UserNotification'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserNotification'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/users/{user}/notifications/{notification}:
         delete:
             tags:
@@ -2059,6 +2115,23 @@ components:
                     description: |-
                         The actual token value - only returned on creation.
                          This is the only time the token value will be visible.
+        ExecuteAIInstructionRequest:
+            required:
+                - instruction
+            type: object
+            properties:
+                instruction:
+                    type: string
+                    description: Required. The instruction to send to the AI.
+                content:
+                    type: string
+                    description: Optional. The context or source text to operate on.
+        ExecuteAIInstructionResponse:
+            type: object
+            properties:
+                content:
+                    type: string
+                    description: The result of the AI instruction execution.
         FieldMapping:
             type: object
             properties:
@@ -2933,6 +3006,7 @@ components:
                     enum:
                         - TYPE_UNSPECIFIED
                         - MEMO_COMMENT
+                        - SYSTEM
                     type: string
                     description: The type of the notification.
                     format: enum
@@ -3055,6 +3129,7 @@ components:
                     format: date-time
             description: UserWebhook represents a webhook owned by a user.
 tags:
+    - name: AIService
     - name: ActivityService
     - name: AttachmentService
     - name: AuthService

@@ -1,18 +1,17 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { toast } from "react-hot-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { memoKeys } from "@/hooks/useMemoQueries";
 import { userKeys } from "@/hooks/useUserQueries";
 import { handleError } from "@/lib/error";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
-import { convertVisibilityFromString } from "@/utils/memo";
+import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import { EditorContent, EditorMetadata, EditorToolbar, FocusModeExitButton, FocusModeOverlay } from "./components";
 import { FOCUS_MODE_STYLES } from "./constants";
 import type { EditorRefActions } from "./Editor";
-import { useAutoSave, useFocusMode, useKeyboard, useMemoInit } from "./hooks";
+import { useAutoSave, useFocusMode, useKeyboard, useMemoInit, useUploadManager } from "./hooks";
 import { cacheService, errorService, memoService, validationService } from "./services";
 import { EditorProvider, useEditorContext } from "./state";
 import type { MemoEditorProps } from "./types";
@@ -51,12 +50,13 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
   const currentUser = useCurrentUser();
   const editorRef = useRef<EditorRefActions>(null);
   const { state, actions, dispatch } = useEditorContext();
-  const { userGeneralSetting } = useAuth();
-
-  // Get default visibility from user settings
-  const defaultVisibility = userGeneralSetting?.memoVisibility ? convertVisibilityFromString(userGeneralSetting.memoVisibility) : undefined;
+  // Force private visibility for now
+  const defaultVisibility = Visibility.PRIVATE;
 
   useMemoInit(editorRef, memoName, cacheKey, currentUser?.name ?? "", autoFocus, defaultVisibility);
+
+  // Background upload management
+  useUploadManager();
 
   // Auto-save content to localStorage
   useAutoSave(state.content, currentUser?.name ?? "", cacheKey);
@@ -132,7 +132,7 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
       */}
       <div
         className={cn(
-          "group relative w-full flex flex-col justify-between items-start bg-card px-4 pt-3 pb-1 rounded-lg border border-border gap-2",
+          "group relative w-full flex flex-col justify-between items-start bg-card px-3 py-2 rounded-lg border border-border gap-1.5",
           FOCUS_MODE_STYLES.transition,
           state.ui.isFocusMode && cn(FOCUS_MODE_STYLES.container.base, FOCUS_MODE_STYLES.container.spacing),
           className,
@@ -141,14 +141,22 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
         {/* Exit button is absolutely positioned in top-right corner when active */}
         <FocusModeExitButton isActive={state.ui.isFocusMode} onToggle={handleToggleFocusMode} title={t("editor.exit-focus-mode")} />
 
-        {/* Editor content grows to fill available space in focus mode */}
-        <EditorContent ref={editorRef} placeholder={placeholder} autoFocus={autoFocus} />
-
-        {/* Metadata and toolbar grouped together at bottom */}
-        <div className="w-full flex flex-col gap-2">
-          <EditorMetadata memoName={memoName} />
-          <EditorToolbar onSave={handleSave} onCancel={onCancel} memoName={memoName} />
-        </div>
+        {state.ui.isFocusMode ? (
+          <>
+            <EditorContent ref={editorRef} placeholder={placeholder} autoFocus={autoFocus} />
+            <div className="w-full flex flex-col gap-2">
+              <EditorMetadata memoName={memoName} />
+              <EditorToolbar onSave={handleSave} onCancel={onCancel} memoName={memoName} />
+            </div>
+          </>
+        ) : (
+          <div className="w-full flex flex-col gap-2">
+            <EditorMetadata memoName={memoName} />
+            <EditorToolbar onSave={handleSave} onCancel={onCancel} memoName={memoName}>
+              <EditorContent ref={editorRef} placeholder={placeholder} autoFocus={autoFocus} />
+            </EditorToolbar>
+          </div>
+        )}
       </div>
     </>
   );

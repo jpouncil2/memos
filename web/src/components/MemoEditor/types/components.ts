@@ -24,6 +24,7 @@ export interface EditorToolbarProps {
   onSave: () => void;
   onCancel?: () => void;
   memoName?: string;
+  children?: React.ReactNode;
 }
 
 export interface EditorMetadataProps {

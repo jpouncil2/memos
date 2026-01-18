@@ -184,7 +184,7 @@ const Editor = forwardRef(function Editor(props: EditorProps, ref: React.Forward
   return (
     <div
       className={cn(
-        "flex flex-col justify-center items-start relative w-full bg-inherit min-h-[44px]",
+        "flex flex-col justify-center items-start relative w-full bg-inherit min-h-[40px]",
         // Focus mode: flex-1 to grow and fill space; Normal: h-auto with max-height
         isFocusMode ? "flex-1" : `h-auto ${EDITOR_HEIGHT.normal}`,
         className,
@@ -192,7 +192,7 @@ const Editor = forwardRef(function Editor(props: EditorProps, ref: React.Forward
     >
       <textarea
         className={cn(
-          "w-full py-2 text-base resize-none overflow-x-hidden overflow-y-auto bg-transparent outline-none placeholder:opacity-70 whitespace-pre-wrap break-words",
+          "w-full py-1.5 text-base resize-none overflow-x-hidden overflow-y-auto bg-transparent outline-none placeholder:opacity-70 whitespace-pre-wrap break-words",
           // Focus mode: flex-1 h-0 to grow within flex container; Normal: h-full to fill wrapper
           isFocusMode ? "flex-1 h-0" : "h-full",
         )}

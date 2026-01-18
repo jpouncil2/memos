@@ -1,7 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { toast } from "react-hot-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { memoKeys } from "@/hooks/useMemoQueries";
 import { userKeys } from "@/hooks/useUserQueries";
@@ -51,8 +50,6 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
   const currentUser = useCurrentUser();
   const editorRef = useRef<EditorRefActions>(null);
   const { state, actions, dispatch } = useEditorContext();
-  const { userGeneralSetting } = useAuth();
-
   // Force private visibility for now
   const defaultVisibility = Visibility.PRIVATE;
 
@@ -144,14 +141,22 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
         {/* Exit button is absolutely positioned in top-right corner when active */}
         <FocusModeExitButton isActive={state.ui.isFocusMode} onToggle={handleToggleFocusMode} title={t("editor.exit-focus-mode")} />
 
-        {/* Editor content grows to fill available space in focus mode */}
-        <EditorContent ref={editorRef} placeholder={placeholder} autoFocus={autoFocus} />
-
-        {/* Metadata and toolbar grouped together at bottom */}
-        <div className="w-full flex flex-col gap-2">
-          <EditorMetadata memoName={memoName} />
-          <EditorToolbar onSave={handleSave} onCancel={onCancel} memoName={memoName} />
-        </div>
+        {state.ui.isFocusMode ? (
+          <>
+            <EditorContent ref={editorRef} placeholder={placeholder} autoFocus={autoFocus} />
+            <div className="w-full flex flex-col gap-2">
+              <EditorMetadata memoName={memoName} />
+              <EditorToolbar onSave={handleSave} onCancel={onCancel} memoName={memoName} />
+            </div>
+          </>
+        ) : (
+          <div className="w-full flex flex-col gap-2">
+            <EditorMetadata memoName={memoName} />
+            <EditorToolbar onSave={handleSave} onCancel={onCancel} memoName={memoName}>
+              <EditorContent ref={editorRef} placeholder={placeholder} autoFocus={autoFocus} />
+            </EditorToolbar>
+          </div>
+        )}
       </div>
     </>
   );

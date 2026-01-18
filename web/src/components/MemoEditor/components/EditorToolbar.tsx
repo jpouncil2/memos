@@ -5,7 +5,7 @@ import { useEditorContext } from "../state";
 import { InsertMenu } from "../Toolbar";
 import type { EditorToolbarProps } from "../types";
 
-export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoName }) => {
+export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoName, children }) => {
   const { state, actions, dispatch } = useEditorContext();
   const { valid } = validationService.canSave(state);
 
@@ -22,7 +22,7 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoNa
   };
 
   return (
-    <div className="w-full flex flex-row items-center justify-between gap-2 mt-2">
+    <div className="w-full flex flex-row items-center gap-2 mt-1">
       <InsertMenu
         isUploading={state.ui.isLoading.uploading}
         location={state.metadata.location}
@@ -30,6 +30,8 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoNa
         onToggleFocusMode={handleToggleFocusMode}
         memoName={memoName}
       />
+
+      <div className="flex-1">{children}</div>
 
       <div className="flex flex-row justify-end items-center gap-2">
         {onCancel && (

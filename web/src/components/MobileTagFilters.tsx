@@ -72,10 +72,10 @@ const MobileTagFilters = () => {
     return (
         <div
             ref={containerRef}
-            className={cn(
-        "sticky z-20 w-full flex flex-row flex-wrap items-center justify-start gap-2",
-        "px-4 py-2 bg-background backdrop-blur-lg shadow-sm",
-            )}
+        className={cn(
+          "sticky z-20 w-full flex flex-row flex-nowrap items-center justify-start gap-2 overflow-x-auto overflow-y-hidden",
+          "px-4 py-2 bg-background backdrop-blur-lg shadow-sm hide-scrollbar",
+        )}
             style={{ top: "var(--mobile-header-height, 0px)" }}
         >
             {sortedTags.map((tag) => {
@@ -85,7 +85,7 @@ const MobileTagFilters = () => {
                         key={tag}
                         onClick={() => toggleTag(tag)}
                         className={cn(
-                            "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+                            "shrink-0 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
                             "border",
                             isSelected
                                 ? "bg-primary text-primary-foreground border-primary"

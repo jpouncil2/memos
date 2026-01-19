@@ -6,6 +6,8 @@ COPY web/package.json web/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY web/ .
 COPY proto/ /proto
+ARG NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_OPTIONS=$NODE_OPTIONS
 RUN pnpm release
 
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS backend

@@ -36,6 +36,7 @@ export default defineConfig({
     },
   },
   build: {
+    reportCompressedSize: false,
     rollupOptions: {
       output: {
         manualChunks: {

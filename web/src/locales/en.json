@@ -313,6 +313,7 @@
       "title": "Memo related settings"
     },
     "my-account": "My Account",
+    "board-defaults": "Board Defaults",
     "preference": "Preferences",
     "preference-section": {
       "default-memo-sort-option": "Memo display time",

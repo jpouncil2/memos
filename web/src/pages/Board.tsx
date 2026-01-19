@@ -1,6 +1,7 @@
 import type { DragEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { PlusIcon } from "lucide-react";
+import { useBoardCardDefaults } from "@/hooks/useBoardCardDefaults";
 import {
   useBoardColumns,
   useBoards,
@@ -10,6 +11,7 @@ import {
   useCreateBoardColumn,
   useCreateCard,
   useUpsertCardPlacement,
+  useUpdateCard,
 } from "@/hooks/useBoardQueries";
 import { cn } from "@/lib/utils";
 import CardDetailSheet from "@/components/Board/CardDetailSheet";
@@ -20,10 +22,12 @@ const Board = () => {
   const [activeBoard, setActiveBoard] = useState<string>("");
   const [activeCard, setActiveCard] = useState<string | null>(null);
 
+  const { defaults } = useBoardCardDefaults();
   const createBoard = useCreateBoard();
   const createColumn = useCreateBoardColumn();
   const createCard = useCreateCard();
   const upsertPlacement = useUpsertCardPlacement();
+  const updateCard = useUpdateCard();
 
   useEffect(() => {
     if (!activeBoard && boards.length > 0) {
@@ -92,11 +96,21 @@ const Board = () => {
   const handleCreateCard = async (columnName: string, status?: string) => {
     const title = window.prompt("Card title");
     if (!title) return;
+    const nextCard: Record<string, string> = {
+      title,
+      status: status ?? "",
+    };
+    if (defaults.defaultType) {
+      nextCard.type = defaults.defaultType;
+    }
+    if (defaults.defaultPriority) {
+      nextCard.priority = defaults.defaultPriority;
+    }
+    if (defaults.defaultSize) {
+      nextCard.size = defaults.defaultSize;
+    }
     createCard.mutate(
-      {
-        title,
-        status: status ?? "",
-      },
+      nextCard,
       {
         onSuccess: (card) => {
           upsertPlacement.mutate({
@@ -120,6 +134,10 @@ const Board = () => {
       card: cardName,
       order: getNextOrder(columnName),
     });
+    const column = columns.find((item) => item.name === columnName);
+    if (column) {
+      updateCard.mutate({ update: { name: cardName, status: column.title || column.name }, updateMask: ["status"] });
+    }
   };
 
   return (
@@ -223,7 +241,13 @@ const Board = () => {
         })}
       </div>
 
-      <CardDetailSheet cardName={activeCard} open={Boolean(activeCard)} onOpenChange={(open) => !open && setActiveCard(null)} />
+      <CardDetailSheet
+        cardName={activeCard}
+        open={Boolean(activeCard)}
+        onOpenChange={(open) => !open && setActiveCard(null)}
+        boardName={activeBoard}
+        columns={columns}
+      />
     </div>
   );
 };

@@ -7,6 +7,8 @@ import { useInstance } from "@/contexts/InstanceContext";
 import { useMemoFilterContext } from "@/contexts/MemoFilterContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useMediaQuery from "@/hooks/useMediaQuery";
+import useNavigateTo from "@/hooks/useNavigateTo";
+import useStandaloneMode from "@/hooks/useStandaloneMode";
 import { cn } from "@/lib/utils";
 import { redirectOnAuthFailure } from "@/utils/auth-redirect";
 
@@ -15,10 +17,18 @@ const RootLayout = () => {
   const [searchParams] = useSearchParams();
   const sm = useMediaQuery("sm");
   const currentUser = useCurrentUser();
+  const navigateTo = useNavigateTo();
+  const isStandalone = useStandaloneMode();
   const { memoRelatedSetting } = useInstance();
   const { removeFilter } = useMemoFilterContext();
   const pathname = useMemo(() => location.pathname, [location.pathname]);
   const prevPathname = usePrevious(pathname);
+
+  useEffect(() => {
+    if (isStandalone && !currentUser) {
+      navigateTo("/auth", { replace: true });
+    }
+  }, [isStandalone, currentUser, navigateTo]);
 
   useEffect(() => {
     if (!currentUser && memoRelatedSetting.disallowPublicVisibility) {

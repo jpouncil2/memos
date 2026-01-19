@@ -5,11 +5,13 @@ import { PaperclipIcon, PlusIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { attachmentServiceClient } from "@/connect";
+import { useBoardCardDefaults } from "@/hooks/useBoardCardDefaults";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import {
   boardKeys,
   useCard,
   useCardComments,
+  useCardPlacements,
   useCardRelations,
   useCardSubtasks,
   useCardTimeEntries,
@@ -21,10 +23,11 @@ import {
   useDeleteCardTimeEntry,
   useUpdateCard,
   useUpdateCardSubtask,
+  useUpsertCardPlacement,
   useUpsertCardRelation,
 } from "@/hooks/useBoardQueries";
 import { cn } from "@/lib/utils";
-import type { CardRelation } from "@/types/proto/api/v1/board_service_pb";
+import type { BoardColumn, CardRelation } from "@/types/proto/api/v1/board_service_pb";
 import { CardRelationType } from "@/types/proto/api/v1/board_service_pb";
 import { AttachmentSchema } from "@/types/proto/api/v1/attachment_service_pb";
 import MemoAttachment from "@/components/MemoAttachment";
@@ -36,6 +39,8 @@ interface Props {
   cardName: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  boardName?: string;
+  columns?: BoardColumn[];
 }
 
 const normalizeCardName = (value: string) => {
@@ -55,16 +60,21 @@ const formatDateTimeInput = (date?: Date) => {
   return dayjs(date).format("YYYY-MM-DDTHH:mm");
 };
 
-const CardDetailSheet = ({ cardName, open, onOpenChange }: Props) => {
+const CardDetailSheet = ({ cardName, open, onOpenChange, boardName, columns }: Props) => {
   const currentUser = useCurrentUser();
+  const { defaults } = useBoardCardDefaults();
   const { data: card } = useCard(cardName ?? undefined, { enabled: open && Boolean(cardName) });
   const { data: relations } = useCardRelations(card?.name, { enabled: open && Boolean(card?.name) });
   const { data: subtasks } = useCardSubtasks(card?.name, { enabled: open && Boolean(card?.name) });
   const { data: comments } = useCardComments(card?.name, { enabled: open && Boolean(card?.name) });
   const { data: timeEntries } = useCardTimeEntries(card?.name, { enabled: open && Boolean(card?.name) });
+  const { data: placements } = useCardPlacements(boardName, {
+    enabled: open && Boolean(boardName),
+  });
 
   const updateCard = useUpdateCard();
   const queryClient = useQueryClient();
+  const upsertPlacement = useUpsertCardPlacement();
   const upsertRelation = useUpsertCardRelation();
   const deleteRelation = useDeleteCardRelation();
   const createSubtask = useCreateCardSubtask();
@@ -80,6 +90,7 @@ const CardDetailSheet = ({ cardName, open, onOpenChange }: Props) => {
   const [priority, setPriority] = useState("");
   const [size, setSize] = useState("");
   const [type, setType] = useState("");
+  const [statusValue, setStatusValue] = useState("");
   const [memoLink, setMemoLink] = useState("");
   const [parentLink, setParentLink] = useState("");
   const [epicLink, setEpicLink] = useState("");
@@ -93,6 +104,43 @@ const CardDetailSheet = ({ cardName, open, onOpenChange }: Props) => {
     return relations?.relations?.find((relation) => relation.type === CardRelationType.CARD_RELATION_EPIC);
   }, [relations]);
 
+  const columnOptions = useMemo(() => {
+    if (columns && columns.length > 0) {
+      return columns.map((column) => ({
+        value: column.name,
+        label: column.title || column.name,
+      }));
+    }
+    return defaults.statuses.map((status) => ({ value: status, label: status }));
+  }, [columns, defaults.statuses]);
+
+  const typeOptions = useMemo(() => {
+    return Array.from(new Set([...defaults.types, type].filter(Boolean)));
+  }, [defaults.types, type]);
+
+  const priorityOptions = useMemo(() => {
+    return Array.from(new Set([...defaults.priorities, priority].filter(Boolean)));
+  }, [defaults.priorities, priority]);
+
+  const sizeOptions = useMemo(() => {
+    return Array.from(new Set([...defaults.sizes, size].filter(Boolean)));
+  }, [defaults.sizes, size]);
+
+  const currentPlacement = useMemo(() => {
+    return placements?.placements?.find((placement) => placement.card === card?.name);
+  }, [placements?.placements, card?.name]);
+
+  const resolvedStatusValue = useMemo(() => {
+    if (columns && columns.length > 0) {
+      if (currentPlacement?.column) {
+        return currentPlacement.column;
+      }
+      const matched = columns.find((column) => column.title === card?.status);
+      return matched?.name ?? "";
+    }
+    return card?.status ?? "";
+  }, [columns, currentPlacement?.column, card?.status]);
+
   useEffect(() => {
     if (!card) return;
     setTitle(card.title || "");
@@ -101,15 +149,50 @@ const CardDetailSheet = ({ cardName, open, onOpenChange }: Props) => {
     setPriority(card.priority || "");
     setSize(card.size || "");
     setType(card.type || "");
+    setStatusValue(resolvedStatusValue);
     setMemoLink(card.memo || "");
     setParentLink(card.parent || "");
     setEpicLink(epicRelation?.relatedCard || "");
     setDueInput(formatDateTimeInput(card.dueTime ? timestampDate(card.dueTime) : undefined));
-  }, [card?.name, epicRelation?.relatedCard]);
+  }, [card?.name, epicRelation?.relatedCard, resolvedStatusValue]);
 
   const handleUpdateCard = (update: Record<string, unknown>, updateMask: string[]) => {
     if (!card?.name) return;
     updateCard.mutate({ update: { name: card.name, ...update }, updateMask });
+  };
+
+  const getNextOrder = (columnName: string) => {
+    const list = placements?.placements?.filter((placement) => placement.column === columnName) ?? [];
+    if (list.length === 0) return 0;
+    return Math.max(...list.map((item) => item.order)) + 1;
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusValue(value);
+    if (!card?.name) return;
+
+    if (columns && columns.length > 0) {
+      const selected = columns.find((column) => column.name === value);
+      if (selected) {
+        const nextStatus = selected.title || selected.name;
+        if (nextStatus !== card.status) {
+          handleUpdateCard({ status: nextStatus }, ["status"]);
+        }
+        if (selected.name && card?.name && selected.name !== currentPlacement?.column) {
+          upsertPlacement.mutate({
+            board: selected.board,
+            column: selected.name,
+            card: card.name,
+            order: getNextOrder(selected.name),
+          });
+        }
+      }
+      return;
+    }
+
+    if (value !== card.status) {
+      handleUpdateCard({ status: value }, ["status"]);
+    }
   };
 
   const handleAttachmentUpload = async (files: FileList | null) => {
@@ -183,7 +266,21 @@ const CardDetailSheet = ({ cardName, open, onOpenChange }: Props) => {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Status</label>
-                <Input value={card?.status || ""} readOnly />
+                <select
+                  value={statusValue}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className={cn(
+                    "flex h-8 w-full rounded-md border border-border bg-transparent px-2 text-sm",
+                    "focus:border-border focus:outline-none",
+                  )}
+                >
+                  <option value="">Unspecified</option>
+                  {columnOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Assignee</label>
@@ -201,11 +298,47 @@ const CardDetailSheet = ({ cardName, open, onOpenChange }: Props) => {
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Type</label>
-                <Input value={type} onChange={(e) => setType(e.target.value)} onBlur={() => handleUpdateCard({ type }, ["type"])} />
+                <select
+                  value={type}
+                  onChange={(e) => {
+                    const nextValue = e.target.value;
+                    setType(nextValue);
+                    handleUpdateCard({ type: nextValue }, ["type"]);
+                  }}
+                  className={cn(
+                    "flex h-8 w-full rounded-md border border-border bg-transparent px-2 text-sm",
+                    "focus:border-border focus:outline-none",
+                  )}
+                >
+                  <option value="">Unspecified</option>
+                  {typeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Priority</label>
-                <Input value={priority} onChange={(e) => setPriority(e.target.value)} onBlur={() => handleUpdateCard({ priority }, ["priority"])} />
+                <select
+                  value={priority}
+                  onChange={(e) => {
+                    const nextValue = e.target.value;
+                    setPriority(nextValue);
+                    handleUpdateCard({ priority: nextValue }, ["priority"]);
+                  }}
+                  className={cn(
+                    "flex h-8 w-full rounded-md border border-border bg-transparent px-2 text-sm",
+                    "focus:border-border focus:outline-none",
+                  )}
+                >
+                  <option value="">Unspecified</option>
+                  {priorityOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Tags</label>
@@ -242,7 +375,25 @@ const CardDetailSheet = ({ cardName, open, onOpenChange }: Props) => {
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Size</label>
-                <Input value={size} onChange={(e) => setSize(e.target.value)} onBlur={() => handleUpdateCard({ size }, ["size"])} />
+                <select
+                  value={size}
+                  onChange={(e) => {
+                    const nextValue = e.target.value;
+                    setSize(nextValue);
+                    handleUpdateCard({ size: nextValue }, ["size"]);
+                  }}
+                  className={cn(
+                    "flex h-8 w-full rounded-md border border-border bg-transparent px-2 text-sm",
+                    "focus:border-border focus:outline-none",
+                  )}
+                >
+                  <option value="">Unspecified</option>
+                  {sizeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Linked memo</label>

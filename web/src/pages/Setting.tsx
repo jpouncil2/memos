@@ -1,8 +1,19 @@
-import { CogIcon, DatabaseIcon, KeyIcon, LibraryIcon, LucideIcon, Settings2Icon, UserIcon, UsersIcon } from "lucide-react";
+import {
+  CogIcon,
+  DatabaseIcon,
+  KanbanSquareIcon,
+  KeyIcon,
+  LibraryIcon,
+  LucideIcon,
+  Settings2Icon,
+  UserIcon,
+  UsersIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import MobileHeader from "@/components/MobileHeader";
 import InstanceSection from "@/components/Settings/InstanceSection";
+import BoardDefaultsSection from "@/components/Settings/BoardDefaultsSection";
 import MemberSection from "@/components/Settings/MemberSection";
 import MemoRelatedSettings from "@/components/Settings/MemoRelatedSettings";
 import MyAccountSection from "@/components/Settings/MyAccountSection";
@@ -18,17 +29,18 @@ import { InstanceSetting_Key } from "@/types/proto/api/v1/instance_service_pb";
 import { User_Role } from "@/types/proto/api/v1/user_service_pb";
 import { useTranslate } from "@/utils/i18n";
 
-type SettingSection = "my-account" | "preference" | "member" | "system" | "memo-related" | "storage" | "sso";
+type SettingSection = "my-account" | "preference" | "board-defaults" | "member" | "system" | "memo-related" | "storage" | "sso";
 
 interface State {
   selectedSection: SettingSection;
 }
 
-const BASIC_SECTIONS: SettingSection[] = ["my-account", "preference"];
+const BASIC_SECTIONS: SettingSection[] = ["my-account", "preference", "board-defaults"];
 const ADMIN_SECTIONS: SettingSection[] = ["member", "system", "memo-related", "storage", "sso"];
 const SECTION_ICON_MAP: Record<SettingSection, LucideIcon> = {
   "my-account": UserIcon,
   preference: CogIcon,
+  "board-defaults": KanbanSquareIcon,
   member: UsersIcon,
   system: Settings2Icon,
   "memo-related": LibraryIcon,
@@ -144,6 +156,8 @@ const Setting = () => {
               <MyAccountSection />
             ) : state.selectedSection === "preference" ? (
               <PreferencesSection />
+            ) : state.selectedSection === "board-defaults" ? (
+              <BoardDefaultsSection />
             ) : state.selectedSection === "member" ? (
               <MemberSection />
             ) : state.selectedSection === "system" ? (

@@ -54,6 +54,15 @@ const AIMenu = () => {
                 <DropdownMenuItem onClick={() => handleAIAction("Summarize this note briefly.")}>
                     Summarize
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                    onClick={() =>
+                        handleAIAction(
+                            "Summarize this memo in 1-3 sentences, then extract key items as a clean bulleted list. Format:\nSummary: ...\n\nBullets:\n- item",
+                        )
+                    }
+                >
+                    Summary + bullet list
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleAIAction("Fix grammar and improve the writing style.")}>
                     Refine writing
                 </DropdownMenuItem>

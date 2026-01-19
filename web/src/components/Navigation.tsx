@@ -1,4 +1,4 @@
-import { BellIcon, EarthIcon, KanbanSquareIcon, LibraryIcon, PaperclipIcon, UserCircleIcon } from "lucide-react";
+import { BellIcon, BookOpenIcon, EarthIcon, KanbanSquareIcon, LibraryIcon, PaperclipIcon, UserCircleIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -40,6 +40,12 @@ const Navigation = (props: Props) => {
     title: t("common.explore"),
     icon: <EarthIcon className="w-6 h-auto shrink-0" />,
   };
+  const libraryNavLink: NavLinkItem = {
+    id: "header-library",
+    path: Routes.LIBRARY,
+    title: t("common.library"),
+    icon: <BookOpenIcon className="w-6 h-auto shrink-0" />,
+  };
   const boardNavLink: NavLinkItem = {
     id: "header-boards",
     path: Routes.BOARDS,
@@ -76,7 +82,7 @@ const Navigation = (props: Props) => {
   };
 
   const navLinks: NavLinkItem[] = currentUser
-    ? [homeNavLink, boardNavLink, exploreNavLink, attachmentsNavLink, inboxNavLink]
+    ? [homeNavLink, libraryNavLink, boardNavLink, exploreNavLink, attachmentsNavLink, inboxNavLink]
     : [exploreNavLink, signInNavLink];
 
   return (

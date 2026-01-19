@@ -13,6 +13,7 @@ const Board = lazy(() => import("@/pages/Board"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const Explore = lazy(() => import("@/pages/Explore"));
 const Inboxes = lazy(() => import("@/pages/Inboxes"));
+const Library = lazy(() => import("@/pages/Library"));
 const MemoDetail = lazy(() => import("@/pages/MemoDetail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const PermissionDenied = lazy(() => import("@/pages/PermissionDenied"));
@@ -70,6 +71,7 @@ const router = createBrowserRouter([
               { path: "u/:username", element: <LazyRoute component={UserProfile} /> },
             ],
           },
+          { path: Routes.LIBRARY, element: <LazyRoute component={Library} /> },
           { path: Routes.ATTACHMENTS, element: <LazyRoute component={Attachments} /> },
           { path: Routes.INBOX, element: <LazyRoute component={Inboxes} /> },
           { path: Routes.SETTING, element: <LazyRoute component={Setting} /> },

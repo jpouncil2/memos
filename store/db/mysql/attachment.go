@@ -15,8 +15,8 @@ import (
 )
 
 func (d *DB) CreateAttachment(ctx context.Context, create *store.Attachment) (*store.Attachment, error) {
-	fields := []string{"`uid`", "`filename`", "`blob`", "`type`", "`size`", "`creator_id`", "`memo_id`", "`storage_type`", "`reference`", "`payload`"}
-	placeholder := []string{"?", "?", "?", "?", "?", "?", "?", "?", "?", "?"}
+	fields := []string{"`uid`", "`filename`", "`blob`", "`type`", "`size`", "`creator_id`", "`memo_id`", "`card_id`", "`storage_type`", "`reference`", "`payload`"}
+	placeholder := []string{"?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?"}
 	storageType := ""
 	if create.StorageType != storepb.AttachmentStorageType_ATTACHMENT_STORAGE_TYPE_UNSPECIFIED {
 		storageType = create.StorageType.String()
@@ -29,7 +29,7 @@ func (d *DB) CreateAttachment(ctx context.Context, create *store.Attachment) (*s
 		}
 		payloadString = string(bytes)
 	}
-	args := []any{create.UID, create.Filename, create.Blob, create.Type, create.Size, create.CreatorID, create.MemoID, storageType, create.Reference, payloadString}
+	args := []any{create.UID, create.Filename, create.Blob, create.Type, create.Size, create.CreatorID, create.MemoID, create.CardID, storageType, create.Reference, payloadString}
 
 	stmt := "INSERT INTO `attachment` (" + strings.Join(fields, ", ") + ") VALUES (" + strings.Join(placeholder, ", ") + ")"
 	result, err := d.db.ExecContext(ctx, stmt, args...)
@@ -77,6 +77,19 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 			args = append(args, id)
 		}
 	}
+	if v := find.CardID; v != nil {
+		where, args = append(where, "`attachment`.`card_id` = ?"), append(args, *v)
+	}
+	if len(find.CardIDList) > 0 {
+		placeholders := make([]string, 0, len(find.CardIDList))
+		for range find.CardIDList {
+			placeholders = append(placeholders, "?")
+		}
+		where = append(where, "`attachment`.`card_id` IN ("+strings.Join(placeholders, ",")+")")
+		for _, id := range find.CardIDList {
+			args = append(args, id)
+		}
+	}
 	if find.HasRelatedMemo {
 		where = append(where, "`attachment`.`memo_id` IS NOT NULL")
 	}
@@ -104,10 +117,12 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 		"UNIX_TIMESTAMP(`attachment`.`created_ts`) AS `created_ts`",
 		"UNIX_TIMESTAMP(`attachment`.`updated_ts`) AS `updated_ts`",
 		"`attachment`.`memo_id` AS `memo_id`",
+		"`attachment`.`card_id` AS `card_id`",
 		"`attachment`.`storage_type` AS `storage_type`",
 		"`attachment`.`reference` AS `reference`",
 		"`attachment`.`payload` AS `payload`",
 		"CASE WHEN `memo`.`uid` IS NOT NULL THEN `memo`.`uid` ELSE NULL END AS `memo_uid`",
+		"CASE WHEN `card`.`uid` IS NOT NULL THEN `card`.`uid` ELSE NULL END AS `card_uid`",
 	}
 	if find.GetBlob {
 		fields = append(fields, "`attachment`.`blob` AS `blob`")
@@ -115,6 +130,7 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 
 	query := "SELECT " + strings.Join(fields, ", ") + " FROM `attachment`" + " " +
 		"LEFT JOIN `memo` ON `attachment`.`memo_id` = `memo`.`id`" + " " +
+		"LEFT JOIN `card` ON `attachment`.`card_id` = `card`.`id`" + " " +
 		"WHERE " + strings.Join(where, " AND ") + " " +
 		"ORDER BY `updated_ts` DESC"
 	if find.Limit != nil {
@@ -134,6 +150,7 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 	for rows.Next() {
 		attachment := store.Attachment{}
 		var memoID sql.NullInt32
+		var cardID sql.NullInt32
 		var storageType string
 		var payloadBytes []byte
 		dests := []any{
@@ -146,10 +163,12 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 			&attachment.CreatedTs,
 			&attachment.UpdatedTs,
 			&memoID,
+			&cardID,
 			&storageType,
 			&attachment.Reference,
 			&payloadBytes,
 			&attachment.MemoUID,
+			&attachment.CardUID,
 		}
 		if find.GetBlob {
 			dests = append(dests, &attachment.Blob)
@@ -160,6 +179,9 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 
 		if memoID.Valid {
 			attachment.MemoID = &memoID.Int32
+		}
+		if cardID.Valid {
+			attachment.CardID = &cardID.Int32
 		}
 		attachment.StorageType = storepb.AttachmentStorageType(storepb.AttachmentStorageType_value[storageType])
 		payload := &storepb.AttachmentPayload{}
@@ -203,6 +225,9 @@ func (d *DB) UpdateAttachment(ctx context.Context, update *store.UpdateAttachmen
 	}
 	if v := update.MemoID; v != nil {
 		set, args = append(set, "`memo_id` = ?"), append(args, *v)
+	}
+	if v := update.CardID; v != nil {
+		set, args = append(set, "`card_id` = ?"), append(args, *v)
 	}
 	if v := update.Reference; v != nil {
 		set, args = append(set, "`reference` = ?"), append(args, *v)

@@ -9,6 +9,7 @@ import Home from "@/pages/Home";
 
 const AdminSignIn = lazy(() => import("@/pages/AdminSignIn"));
 const Archived = lazy(() => import("@/pages/Archived"));
+const Board = lazy(() => import("@/pages/Board"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const Explore = lazy(() => import("@/pages/Explore"));
 const Inboxes = lazy(() => import("@/pages/Inboxes"));
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
               { path: "", element: <Home /> },
               { path: Routes.EXPLORE, element: <LazyRoute component={Explore} /> },
               { path: Routes.ARCHIVED, element: <LazyRoute component={Archived} /> },
+              { path: Routes.BOARDS, element: <LazyRoute component={Board} /> },
               { path: "u/:username", element: <LazyRoute component={UserProfile} /> },
             ],
           },

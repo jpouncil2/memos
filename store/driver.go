@@ -34,6 +34,54 @@ type Driver interface {
 	ListMemoRelations(ctx context.Context, find *FindMemoRelation) ([]*MemoRelation, error)
 	DeleteMemoRelation(ctx context.Context, delete *DeleteMemoRelation) error
 
+	// Board model related methods.
+	CreateBoard(ctx context.Context, create *Board) (*Board, error)
+	ListBoards(ctx context.Context, find *FindBoard) ([]*Board, error)
+	UpdateBoard(ctx context.Context, update *UpdateBoard) error
+	DeleteBoard(ctx context.Context, delete *DeleteBoard) error
+
+	// BoardColumn model related methods.
+	CreateBoardColumn(ctx context.Context, create *BoardColumn) (*BoardColumn, error)
+	ListBoardColumns(ctx context.Context, find *FindBoardColumn) ([]*BoardColumn, error)
+	UpdateBoardColumn(ctx context.Context, update *UpdateBoardColumn) error
+	DeleteBoardColumn(ctx context.Context, delete *DeleteBoardColumn) error
+
+	// Card model related methods.
+	CreateCard(ctx context.Context, create *Card) (*Card, error)
+	ListCards(ctx context.Context, find *FindCard) ([]*Card, error)
+	UpdateCard(ctx context.Context, update *UpdateCard) error
+	DeleteCard(ctx context.Context, delete *DeleteCard) error
+
+	// CardPlacement model related methods.
+	UpsertCardPlacement(ctx context.Context, create *CardPlacement) (*CardPlacement, error)
+	ListCardPlacements(ctx context.Context, find *FindCardPlacement) ([]*CardPlacement, error)
+	DeleteCardPlacement(ctx context.Context, delete *DeleteCardPlacement) error
+
+	// CardRelation model related methods.
+	UpsertCardRelation(ctx context.Context, create *CardRelation) (*CardRelation, error)
+	ListCardRelations(ctx context.Context, find *FindCardRelation) ([]*CardRelation, error)
+	DeleteCardRelation(ctx context.Context, delete *DeleteCardRelation) error
+
+	// CardMemoLink model related methods.
+	UpsertCardMemoLink(ctx context.Context, create *CardMemoLink) (*CardMemoLink, error)
+	GetCardMemoLink(ctx context.Context, find *FindCardMemoLink) (*CardMemoLink, error)
+	DeleteCardMemoLink(ctx context.Context, delete *DeleteCardMemoLink) error
+
+	// CardSubtask model related methods.
+	CreateCardSubtask(ctx context.Context, create *CardSubtask) (*CardSubtask, error)
+	ListCardSubtasks(ctx context.Context, find *FindCardSubtask) ([]*CardSubtask, error)
+	UpdateCardSubtask(ctx context.Context, update *UpdateCardSubtask) error
+	DeleteCardSubtask(ctx context.Context, delete *DeleteCardSubtask) error
+
+	// CardComment model related methods.
+	CreateCardComment(ctx context.Context, create *CardComment) (*CardComment, error)
+	ListCardComments(ctx context.Context, find *FindCardComment) ([]*CardComment, error)
+
+	// CardTimeEntry model related methods.
+	CreateCardTimeEntry(ctx context.Context, create *CardTimeEntry) (*CardTimeEntry, error)
+	ListCardTimeEntries(ctx context.Context, find *FindCardTimeEntry) ([]*CardTimeEntry, error)
+	DeleteCardTimeEntry(ctx context.Context, delete *DeleteCardTimeEntry) error
+
 	// InstanceSetting model related methods.
 	UpsertInstanceSetting(ctx context.Context, upsert *InstanceSetting) (*InstanceSetting, error)
 	ListInstanceSettings(ctx context.Context, find *FindInstanceSetting) ([]*InstanceSetting, error)

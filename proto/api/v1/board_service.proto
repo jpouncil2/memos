@@ -1,0 +1,482 @@
+syntax = "proto3";
+
+package memos.api.v1;
+
+import "api/v1/attachment_service.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gen/api/v1";
+
+service BoardService {
+  // Board CRUD
+  rpc ListBoards(ListBoardsRequest) returns (ListBoardsResponse) {
+    option (google.api.http) = {get: "/api/v1/boards"};
+  }
+  rpc CreateBoard(CreateBoardRequest) returns (Board) {
+    option (google.api.http) = {
+      post: "/api/v1/boards"
+      body: "board"
+    };
+    option (google.api.method_signature) = "board";
+  }
+  rpc GetBoard(GetBoardRequest) returns (Board) {
+    option (google.api.http) = {get: "/api/v1/{name=boards/*}"};
+    option (google.api.method_signature) = "name";
+  }
+  rpc UpdateBoard(UpdateBoardRequest) returns (Board) {
+    option (google.api.http) = {
+      patch: "/api/v1/{board.name=boards/*}"
+      body: "board"
+    };
+    option (google.api.method_signature) = "board,update_mask";
+  }
+  rpc DeleteBoard(DeleteBoardRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=boards/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Columns
+  rpc ListBoardColumns(ListBoardColumnsRequest) returns (ListBoardColumnsResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=boards/*}/columns"};
+    option (google.api.method_signature) = "parent";
+  }
+  rpc CreateBoardColumn(CreateBoardColumnRequest) returns (BoardColumn) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=boards/*}/columns"
+      body: "column"
+    };
+    option (google.api.method_signature) = "parent,column";
+  }
+  rpc UpdateBoardColumn(UpdateBoardColumnRequest) returns (BoardColumn) {
+    option (google.api.http) = {
+      patch: "/api/v1/{column.name=boards/*/columns/*}"
+      body: "column"
+    };
+    option (google.api.method_signature) = "column,update_mask";
+  }
+  rpc DeleteBoardColumn(DeleteBoardColumnRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=boards/*/columns/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Cards
+  rpc ListCards(ListCardsRequest) returns (ListCardsResponse) {
+    option (google.api.http) = {get: "/api/v1/cards"};
+  }
+  rpc CreateCard(CreateCardRequest) returns (Card) {
+    option (google.api.http) = {
+      post: "/api/v1/cards"
+      body: "card"
+    };
+    option (google.api.method_signature) = "card";
+  }
+  rpc GetCard(GetCardRequest) returns (Card) {
+    option (google.api.http) = {get: "/api/v1/{name=cards/*}"};
+    option (google.api.method_signature) = "name";
+  }
+  rpc UpdateCard(UpdateCardRequest) returns (Card) {
+    option (google.api.http) = {
+      patch: "/api/v1/{card.name=cards/*}"
+      body: "card"
+    };
+    option (google.api.method_signature) = "card,update_mask";
+  }
+  rpc DeleteCard(DeleteCardRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=cards/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Card placement (global card on board/column)
+  rpc ListCardPlacements(ListCardPlacementsRequest) returns (ListCardPlacementsResponse) {
+    option (google.api.http) = {get: "/api/v1/cardPlacements"};
+  }
+  rpc UpsertCardPlacement(UpsertCardPlacementRequest) returns (CardPlacement) {
+    option (google.api.http) = {
+      post: "/api/v1/cardPlacements"
+      body: "placement"
+    };
+    option (google.api.method_signature) = "placement";
+  }
+  rpc DeleteCardPlacement(DeleteCardPlacementRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=boards/*/columns/*/cards/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Card relations (parent/epic)
+  rpc ListCardRelations(ListCardRelationsRequest) returns (ListCardRelationsResponse) {
+    option (google.api.http) = {get: "/api/v1/{name=cards/*}/relations"};
+    option (google.api.method_signature) = "name";
+  }
+  rpc UpsertCardRelation(UpsertCardRelationRequest) returns (CardRelation) {
+    option (google.api.http) = {
+      post: "/api/v1/{name=cards/*}/relations"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+  rpc DeleteCardRelation(DeleteCardRelationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=cards/*/relations/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Subtasks
+  rpc ListCardSubtasks(ListCardSubtasksRequest) returns (ListCardSubtasksResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=cards/*}/subtasks"};
+    option (google.api.method_signature) = "parent";
+  }
+  rpc CreateCardSubtask(CreateCardSubtaskRequest) returns (CardSubtask) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=cards/*}/subtasks"
+      body: "subtask"
+    };
+    option (google.api.method_signature) = "parent,subtask";
+  }
+  rpc UpdateCardSubtask(UpdateCardSubtaskRequest) returns (CardSubtask) {
+    option (google.api.http) = {
+      patch: "/api/v1/{subtask.name=cards/*/subtasks/*}"
+      body: "subtask"
+    };
+    option (google.api.method_signature) = "subtask,update_mask";
+  }
+  rpc DeleteCardSubtask(DeleteCardSubtaskRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=cards/*/subtasks/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Comments
+  rpc ListCardComments(ListCardCommentsRequest) returns (ListCardCommentsResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=cards/*}/comments"};
+    option (google.api.method_signature) = "parent";
+  }
+  rpc CreateCardComment(CreateCardCommentRequest) returns (CardComment) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=cards/*}/comments"
+      body: "comment"
+    };
+    option (google.api.method_signature) = "parent,comment";
+  }
+
+  // Time tracking
+  rpc ListCardTimeEntries(ListCardTimeEntriesRequest) returns (ListCardTimeEntriesResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=cards/*}/timeEntries"};
+    option (google.api.method_signature) = "parent";
+  }
+  rpc CreateCardTimeEntry(CreateCardTimeEntryRequest) returns (CardTimeEntry) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=cards/*}/timeEntries"
+      body: "time_entry"
+    };
+    option (google.api.method_signature) = "parent,time_entry";
+  }
+  rpc DeleteCardTimeEntry(DeleteCardTimeEntryRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=cards/*/timeEntries/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}
+
+enum CardRelationType {
+  CARD_RELATION_TYPE_UNSPECIFIED = 0;
+  CARD_RELATION_PARENT = 1;
+  CARD_RELATION_EPIC = 2;
+}
+
+message Board {
+  option (google.api.resource) = {
+    type: "memos.api.v1/Board"
+    pattern: "boards/{board}"
+    singular: "board"
+    plural: "boards"
+  };
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string creator = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp create_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string title = 5 [(google.api.field_behavior) = REQUIRED];
+  string description = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message BoardColumn {
+  option (google.api.resource) = {
+    type: "memos.api.v1/BoardColumn"
+    pattern: "boards/{board}/columns/{column}"
+    singular: "column"
+    plural: "columns"
+  };
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string board = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp create_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string title = 5 [(google.api.field_behavior) = REQUIRED];
+  int32 order = 6 [(google.api.field_behavior) = REQUIRED];
+}
+
+message Card {
+  option (google.api.resource) = {
+    type: "memos.api.v1/Card"
+    pattern: "cards/{card}"
+    singular: "card"
+    plural: "cards"
+  };
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string creator = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp create_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string title = 5 [(google.api.field_behavior) = REQUIRED];
+  string description = 6 [(google.api.field_behavior) = OPTIONAL];
+  string status = 7 [(google.api.field_behavior) = OPTIONAL];
+  string type = 8 [(google.api.field_behavior) = OPTIONAL];
+  string assignee = 9 [(google.api.field_behavior) = OPTIONAL];
+  repeated string tags = 10 [(google.api.field_behavior) = OPTIONAL];
+  string priority = 11 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp due_time = 12 [(google.api.field_behavior) = OPTIONAL];
+  string size = 13 [(google.api.field_behavior) = OPTIONAL];
+  string memo = 14 [(google.api.field_behavior) = OPTIONAL];
+  string parent = 15 [(google.api.field_behavior) = OPTIONAL];
+  repeated Attachment attachments = 16 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message CardPlacement {
+  string board = 1 [(google.api.field_behavior) = REQUIRED];
+  string column = 2 [(google.api.field_behavior) = REQUIRED];
+  string card = 3 [(google.api.field_behavior) = REQUIRED];
+  int32 order = 4 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Timestamp create_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message CardRelation {
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string card = 2 [(google.api.field_behavior) = REQUIRED];
+  string related_card = 3 [(google.api.field_behavior) = REQUIRED];
+  CardRelationType type = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CardSubtask {
+  option (google.api.resource) = {
+    type: "memos.api.v1/CardSubtask"
+    pattern: "cards/{card}/subtasks/{subtask}"
+    singular: "subtask"
+    plural: "subtasks"
+  };
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string card = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp create_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string title = 5 [(google.api.field_behavior) = REQUIRED];
+  bool done = 6 [(google.api.field_behavior) = OPTIONAL];
+  int32 order = 7 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message CardComment {
+  option (google.api.resource) = {
+    type: "memos.api.v1/CardComment"
+    pattern: "cards/{card}/comments/{comment}"
+    singular: "comment"
+    plural: "comments"
+  };
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string card = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string creator = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp create_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string content = 5 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CardTimeEntry {
+  option (google.api.resource) = {
+    type: "memos.api.v1/CardTimeEntry"
+    pattern: "cards/{card}/timeEntries/{time_entry}"
+    singular: "time_entry"
+    plural: "time_entries"
+  };
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string card = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string creator = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp create_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp start_time = 5 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Timestamp end_time = 6 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListBoardsRequest {
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+  string order_by = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListBoardsResponse {
+  repeated Board boards = 1;
+  string next_page_token = 2;
+  int32 total_size = 3;
+}
+
+message CreateBoardRequest {
+  Board board = 1 [(google.api.field_behavior) = REQUIRED];
+  string board_id = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message GetBoardRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message UpdateBoardRequest {
+  Board board = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteBoardRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListBoardColumnsRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListBoardColumnsResponse {
+  repeated BoardColumn columns = 1;
+}
+
+message CreateBoardColumnRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  BoardColumn column = 2 [(google.api.field_behavior) = REQUIRED];
+  string column_id = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message UpdateBoardColumnRequest {
+  BoardColumn column = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteBoardColumnRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardsRequest {
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+  string order_by = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListCardsResponse {
+  repeated Card cards = 1;
+  string next_page_token = 2;
+  int32 total_size = 3;
+}
+
+message CreateCardRequest {
+  Card card = 1 [(google.api.field_behavior) = REQUIRED];
+  string card_id = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message GetCardRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message UpdateCardRequest {
+  Card card = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteCardRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardPlacementsRequest {
+  string board = 1 [(google.api.field_behavior) = OPTIONAL];
+  string card = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListCardPlacementsResponse {
+  repeated CardPlacement placements = 1;
+}
+
+message UpsertCardPlacementRequest {
+  CardPlacement placement = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteCardPlacementRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardRelationsRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardRelationsResponse {
+  repeated CardRelation relations = 1;
+}
+
+message UpsertCardRelationRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  string related_card = 2 [(google.api.field_behavior) = REQUIRED];
+  CardRelationType type = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteCardRelationRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardSubtasksRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardSubtasksResponse {
+  repeated CardSubtask subtasks = 1;
+}
+
+message CreateCardSubtaskRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  CardSubtask subtask = 2 [(google.api.field_behavior) = REQUIRED];
+  string subtask_id = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message UpdateCardSubtaskRequest {
+  CardSubtask subtask = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteCardSubtaskRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardCommentsRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardCommentsResponse {
+  repeated CardComment comments = 1;
+}
+
+message CreateCardCommentRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  CardComment comment = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardTimeEntriesRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListCardTimeEntriesResponse {
+  repeated CardTimeEntry time_entries = 1;
+}
+
+message CreateCardTimeEntryRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  CardTimeEntry time_entry = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteCardTimeEntryRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}

@@ -35,9 +35,12 @@ type Attachment struct {
 
 	// The related memo ID.
 	MemoID *int32
+	// The related card ID.
+	CardID *int32
 
 	// Composed field
 	MemoUID *string
+	CardUID *string
 }
 
 type FindAttachment struct {
@@ -49,6 +52,8 @@ type FindAttachment struct {
 	FilenameSearch *string
 	MemoID         *int32
 	MemoIDList     []int32
+	CardID         *int32
+	CardIDList     []int32
 	HasRelatedMemo bool
 	StorageType    *storepb.AttachmentStorageType
 	Filters        []string
@@ -62,6 +67,7 @@ type UpdateAttachment struct {
 	UpdatedTs *int64
 	Filename  *string
 	MemoID    *int32
+	CardID    *int32
 	Reference *string
 	Payload   *storepb.AttachmentPayload
 }

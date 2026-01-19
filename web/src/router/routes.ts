@@ -3,6 +3,7 @@ export const ROUTES = {
   ATTACHMENTS: "/attachments",
   INBOX: "/inbox",
   ARCHIVED: "/archived",
+  BOARDS: "/boards",
   SETTING: "/setting",
   EXPLORE: "/explore",
   AUTH: "/auth",

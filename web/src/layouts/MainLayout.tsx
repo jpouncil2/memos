@@ -31,7 +31,7 @@ const MainLayout = () => {
     return "home"; // fallback
   }, [location.pathname]);
 
-  const isHomePage = context === "home";
+  const isHomePage = location.pathname === Routes.ROOT;
   const showBottomEditor = isStandalone && !md && isHomePage;
 
   // Determine context based on current route

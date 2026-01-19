@@ -183,6 +183,240 @@ func (s *ConnectServiceHandler) ListUserWebhooks(ctx context.Context, req *conne
 	return connect.NewResponse(resp), nil
 }
 
+// BoardService
+
+func (s *ConnectServiceHandler) ListBoards(ctx context.Context, req *connect.Request[v1pb.ListBoardsRequest]) (*connect.Response[v1pb.ListBoardsResponse], error) {
+	resp, err := s.APIV1Service.ListBoards(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateBoard(ctx context.Context, req *connect.Request[v1pb.CreateBoardRequest]) (*connect.Response[v1pb.Board], error) {
+	resp, err := s.APIV1Service.CreateBoard(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) GetBoard(ctx context.Context, req *connect.Request[v1pb.GetBoardRequest]) (*connect.Response[v1pb.Board], error) {
+	resp, err := s.APIV1Service.GetBoard(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateBoard(ctx context.Context, req *connect.Request[v1pb.UpdateBoardRequest]) (*connect.Response[v1pb.Board], error) {
+	resp, err := s.APIV1Service.UpdateBoard(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteBoard(ctx context.Context, req *connect.Request[v1pb.DeleteBoardRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteBoard(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListBoardColumns(ctx context.Context, req *connect.Request[v1pb.ListBoardColumnsRequest]) (*connect.Response[v1pb.ListBoardColumnsResponse], error) {
+	resp, err := s.APIV1Service.ListBoardColumns(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateBoardColumn(ctx context.Context, req *connect.Request[v1pb.CreateBoardColumnRequest]) (*connect.Response[v1pb.BoardColumn], error) {
+	resp, err := s.APIV1Service.CreateBoardColumn(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateBoardColumn(ctx context.Context, req *connect.Request[v1pb.UpdateBoardColumnRequest]) (*connect.Response[v1pb.BoardColumn], error) {
+	resp, err := s.APIV1Service.UpdateBoardColumn(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteBoardColumn(ctx context.Context, req *connect.Request[v1pb.DeleteBoardColumnRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteBoardColumn(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListCards(ctx context.Context, req *connect.Request[v1pb.ListCardsRequest]) (*connect.Response[v1pb.ListCardsResponse], error) {
+	resp, err := s.APIV1Service.ListCards(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateCard(ctx context.Context, req *connect.Request[v1pb.CreateCardRequest]) (*connect.Response[v1pb.Card], error) {
+	resp, err := s.APIV1Service.CreateCard(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) GetCard(ctx context.Context, req *connect.Request[v1pb.GetCardRequest]) (*connect.Response[v1pb.Card], error) {
+	resp, err := s.APIV1Service.GetCard(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateCard(ctx context.Context, req *connect.Request[v1pb.UpdateCardRequest]) (*connect.Response[v1pb.Card], error) {
+	resp, err := s.APIV1Service.UpdateCard(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteCard(ctx context.Context, req *connect.Request[v1pb.DeleteCardRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteCard(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListCardPlacements(ctx context.Context, req *connect.Request[v1pb.ListCardPlacementsRequest]) (*connect.Response[v1pb.ListCardPlacementsResponse], error) {
+	resp, err := s.APIV1Service.ListCardPlacements(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpsertCardPlacement(ctx context.Context, req *connect.Request[v1pb.UpsertCardPlacementRequest]) (*connect.Response[v1pb.CardPlacement], error) {
+	resp, err := s.APIV1Service.UpsertCardPlacement(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteCardPlacement(ctx context.Context, req *connect.Request[v1pb.DeleteCardPlacementRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteCardPlacement(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListCardRelations(ctx context.Context, req *connect.Request[v1pb.ListCardRelationsRequest]) (*connect.Response[v1pb.ListCardRelationsResponse], error) {
+	resp, err := s.APIV1Service.ListCardRelations(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpsertCardRelation(ctx context.Context, req *connect.Request[v1pb.UpsertCardRelationRequest]) (*connect.Response[v1pb.CardRelation], error) {
+	resp, err := s.APIV1Service.UpsertCardRelation(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteCardRelation(ctx context.Context, req *connect.Request[v1pb.DeleteCardRelationRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteCardRelation(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListCardSubtasks(ctx context.Context, req *connect.Request[v1pb.ListCardSubtasksRequest]) (*connect.Response[v1pb.ListCardSubtasksResponse], error) {
+	resp, err := s.APIV1Service.ListCardSubtasks(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateCardSubtask(ctx context.Context, req *connect.Request[v1pb.CreateCardSubtaskRequest]) (*connect.Response[v1pb.CardSubtask], error) {
+	resp, err := s.APIV1Service.CreateCardSubtask(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateCardSubtask(ctx context.Context, req *connect.Request[v1pb.UpdateCardSubtaskRequest]) (*connect.Response[v1pb.CardSubtask], error) {
+	resp, err := s.APIV1Service.UpdateCardSubtask(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteCardSubtask(ctx context.Context, req *connect.Request[v1pb.DeleteCardSubtaskRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteCardSubtask(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListCardComments(ctx context.Context, req *connect.Request[v1pb.ListCardCommentsRequest]) (*connect.Response[v1pb.ListCardCommentsResponse], error) {
+	resp, err := s.APIV1Service.ListCardComments(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateCardComment(ctx context.Context, req *connect.Request[v1pb.CreateCardCommentRequest]) (*connect.Response[v1pb.CardComment], error) {
+	resp, err := s.APIV1Service.CreateCardComment(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListCardTimeEntries(ctx context.Context, req *connect.Request[v1pb.ListCardTimeEntriesRequest]) (*connect.Response[v1pb.ListCardTimeEntriesResponse], error) {
+	resp, err := s.APIV1Service.ListCardTimeEntries(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateCardTimeEntry(ctx context.Context, req *connect.Request[v1pb.CreateCardTimeEntryRequest]) (*connect.Response[v1pb.CardTimeEntry], error) {
+	resp, err := s.APIV1Service.CreateCardTimeEntry(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteCardTimeEntry(ctx context.Context, req *connect.Request[v1pb.DeleteCardTimeEntryRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteCardTimeEntry(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 func (s *ConnectServiceHandler) CreateUserWebhook(ctx context.Context, req *connect.Request[v1pb.CreateUserWebhookRequest]) (*connect.Response[v1pb.UserWebhook], error) {
 	resp, err := s.APIV1Service.CreateUserWebhook(ctx, req.Msg)
 	if err != nil {

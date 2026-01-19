@@ -82,6 +82,11 @@ const InsertMenu = (props: InsertMenuProps) => {
   const aiItems = useMemo(
     () => [
       { label: "Summarize", instruction: "Summarize this note briefly." },
+      {
+        label: "Summary + bullet list",
+        instruction:
+          "Summarize this memo in 1-3 sentences, then extract key items as a clean bulleted list. Format:\nSummary: ...\n\nBullets:\n- item",
+      },
       { label: "Refine writing", instruction: "Fix grammar and improve the writing style." },
       { label: "Shorten", instruction: "Make this note more concise." },
       { label: "Expand", instruction: "Extend this note with more relevant details." },

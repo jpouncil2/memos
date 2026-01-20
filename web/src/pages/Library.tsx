@@ -1,14 +1,12 @@
-import { create } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
 import {
   BookOpenIcon,
   ExternalLinkIcon,
-  FileAudioIcon,
-  LayoutGridIcon,
-  ListIcon,
   PlayIcon,
   SearchIcon,
+  StarIcon,
+  TrashIcon,
   UploadCloudIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -19,17 +17,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { attachmentServiceClient } from "@/connect";
+import { useDeleteAttachment } from "@/hooks/useAttachmentQueries";
 import useLoading from "@/hooks/useLoading";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { handleError } from "@/lib/error";
 import type { Attachment } from "@/types/proto/api/v1/attachment_service_pb";
-import { AttachmentSchema } from "@/types/proto/api/v1/attachment_service_pb";
 import { getAttachmentUrl } from "@/utils/attachment";
 import { formatFileSize, getFileTypeLabel } from "@/utils/format";
 import { useTranslate } from "@/utils/i18n";
+import type { LocalFile } from "@/components/MemoEditor/types/attachment";
+import { uploadService } from "@/components/MemoEditor/services";
 
 const PAGE_SIZE = 200;
+const PINNED_STORAGE_KEY = "memos-library-pins";
 
 const isPdfAttachment = (attachment: Attachment) => attachment.type === "application/pdf";
 const isAudioAttachment = (attachment: Attachment) => attachment.type.startsWith("audio/");
@@ -37,18 +39,6 @@ const isLibraryAttachment = (attachment: Attachment) => !attachment.memo && !att
 
 const isPdfFile = (file: File) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 const isAudioFile = (file: File) => file.type.startsWith("audio/") || /\.(mp3|m4a|wav|aac|flac|ogg)$/i.test(file.name);
-const getFileMimeType = (file: File) => {
-  if (file.type) return file.type;
-  const name = file.name.toLowerCase();
-  if (name.endsWith(".pdf")) return "application/pdf";
-  if (name.endsWith(".mp3")) return "audio/mpeg";
-  if (name.endsWith(".m4a")) return "audio/mp4";
-  if (name.endsWith(".wav")) return "audio/wav";
-  if (name.endsWith(".aac")) return "audio/aac";
-  if (name.endsWith(".flac")) return "audio/flac";
-  if (name.endsWith(".ogg")) return "audio/ogg";
-  return "application/octet-stream";
-};
 
 const filterLibraryAttachments = (attachments: Attachment[], searchQuery: string): Attachment[] => {
   if (!searchQuery.trim()) return attachments;
@@ -60,18 +50,48 @@ const getAttachmentDate = (attachment: Attachment) => {
   return attachment.createTime ? timestampDate(attachment.createTime) : new Date(0);
 };
 
+const loadPinnedItems = (): string[] => {
+  try {
+    const stored = localStorage.getItem(PINNED_STORAGE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed.filter((value) => typeof value === "string") : [];
+  } catch {
+    return [];
+  }
+};
+
+const savePinnedItems = (items: string[]) => {
+  try {
+    localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // Ignore storage failures.
+  }
+};
+
+const sortByPinnedAndDate = (items: Attachment[], pinnedSet: Set<string>) => {
+  return items.slice().sort((a, b) => {
+    const pinnedDelta = Number(pinnedSet.has(b.name)) - Number(pinnedSet.has(a.name));
+    if (pinnedDelta !== 0) return pinnedDelta;
+    return dayjs(getAttachmentDate(b)).unix() - dayjs(getAttachmentDate(a)).unix();
+  });
+};
+
 const Library = () => {
   const t = useTranslate();
   const md = useMediaQuery("md");
   const loadingState = useLoading();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { mutateAsync: deleteAttachment } = useDeleteAttachment();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [nextPageToken, setNextPageToken] = useState("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [uploadQueue, setUploadQueue] = useState<LocalFile[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<Attachment | null>(null);
+  const [pinnedItems, setPinnedItems] = useState<string[]>(loadPinnedItems());
   const [activeAttachment, setActiveAttachment] = useState<Attachment | null>(null);
 
   const fetchAttachments = useCallback(
@@ -122,30 +142,55 @@ const Library = () => {
     fileInputRef.current?.click();
   };
 
+  const updateUploadQueue = useCallback((previewUrl: string, update: Partial<LocalFile>) => {
+    setUploadQueue((prev) =>
+      prev.map((item) => (item.previewUrl === previewUrl ? { ...item, ...update } : item)),
+    );
+  }, []);
+
+  const removeUploadItem = useCallback((previewUrl: string) => {
+    setUploadQueue((prev) => prev.filter((item) => item.previewUrl !== previewUrl));
+  }, []);
+
   const handleUploadFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     setIsUploading(true);
-    const uploaded: Attachment[] = [];
+
+    const queueItems: LocalFile[] = Array.from(files).map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      progress: 0,
+    }));
+
+    setUploadQueue((prev) => [...queueItems, ...prev]);
+
     try {
-      for (const file of Array.from(files)) {
-        if (!isPdfFile(file) && !isAudioFile(file)) {
-          toast.error(`Unsupported file: ${file.name}`);
-          continue;
-        }
-        const attachment = await attachmentServiceClient.createAttachment({
-          attachment: create(AttachmentSchema, {
-            filename: file.name,
-            size: BigInt(file.size),
-            type: getFileMimeType(file),
-            content: new Uint8Array(await file.arrayBuffer()),
-          }),
-        });
-        uploaded.push(attachment);
-      }
-      if (uploaded.length > 0) {
-        setAttachments((prev) => [...uploaded, ...prev]);
-        toast.success("Added to library");
-      }
+      await Promise.all(
+        queueItems.map(async (localFile) => {
+          if (!isPdfFile(localFile.file) && !isAudioFile(localFile.file)) {
+            updateUploadQueue(localFile.previewUrl, { error: "Unsupported file" });
+            toast.error(`Unsupported file: ${localFile.file.name}`);
+            removeUploadItem(localFile.previewUrl);
+            URL.revokeObjectURL(localFile.previewUrl);
+            return;
+          }
+
+          try {
+            const attachment = await uploadService.uploadFileWithProgress(localFile, (progress) => {
+              updateUploadQueue(localFile.previewUrl, { progress });
+            });
+            setAttachments((prev) => [attachment, ...prev]);
+            updateUploadQueue(localFile.previewUrl, { progress: 100, attachment });
+          } catch (error: any) {
+            updateUploadQueue(localFile.previewUrl, { error: error?.message || "Upload failed" });
+            toast.error(error?.message || "Upload failed");
+          } finally {
+            removeUploadItem(localFile.previewUrl);
+            URL.revokeObjectURL(localFile.previewUrl);
+          }
+        }),
+      );
+      toast.success("Added to library");
     } catch (error) {
       handleError(error, toast.error, {
         context: "Failed to upload library files",
@@ -163,29 +208,66 @@ const Library = () => {
     return attachments.filter(isLibraryAttachment).filter((attachment) => isPdfAttachment(attachment) || isAudioAttachment(attachment));
   }, [attachments]);
 
+  const pinnedSet = useMemo(() => new Set(pinnedItems), [pinnedItems]);
+
   const filteredAttachments = useMemo(
     () => filterLibraryAttachments(libraryAttachments, searchQuery),
     [libraryAttachments, searchQuery],
   );
 
   const pdfAttachments = useMemo(
-    () =>
-      filteredAttachments
-        .filter(isPdfAttachment)
-        .sort((a, b) => dayjs(getAttachmentDate(b)).unix() - dayjs(getAttachmentDate(a)).unix()),
-    [filteredAttachments],
+    () => sortByPinnedAndDate(filteredAttachments.filter(isPdfAttachment), pinnedSet),
+    [filteredAttachments, pinnedSet],
   );
 
   const audioAttachments = useMemo(
-    () =>
-      filteredAttachments
-        .filter(isAudioAttachment)
-        .sort((a, b) => dayjs(getAttachmentDate(b)).unix() - dayjs(getAttachmentDate(a)).unix()),
-    [filteredAttachments],
+    () => sortByPinnedAndDate(filteredAttachments.filter(isAudioAttachment), pinnedSet),
+    [filteredAttachments, pinnedSet],
   );
+
+  const favoriteAttachments = useMemo(() => {
+    return filteredAttachments
+      .filter((attachment) => pinnedSet.has(attachment.name))
+      .slice()
+      .sort((a, b) => dayjs(getAttachmentDate(b)).unix() - dayjs(getAttachmentDate(a)).unix());
+  }, [filteredAttachments, pinnedSet]);
 
   const handleOpenAttachment = (attachment: Attachment) => {
     setActiveAttachment(attachment);
+  };
+
+  const togglePinned = (attachment: Attachment) => {
+    setPinnedItems((prev) => {
+      const next = prev.includes(attachment.name)
+        ? prev.filter((name) => name !== attachment.name)
+        : [attachment.name, ...prev];
+      savePinnedItems(next);
+      return next;
+    });
+  };
+
+  const handleDeleteAttachment = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteAttachment(deleteTarget.name);
+      setAttachments((prev) => prev.filter((attachment) => attachment.name !== deleteTarget.name));
+      setPinnedItems((prev) => {
+        const next = prev.filter((name) => name !== deleteTarget.name);
+        savePinnedItems(next);
+        return next;
+      });
+      if (activeAttachment?.name === deleteTarget.name) {
+        setActiveAttachment(null);
+      }
+      toast.success("Removed from library");
+    } catch (error) {
+      handleError(error, toast.error, {
+        context: "Failed to delete attachment",
+        fallbackMessage: "Failed to delete file.",
+      });
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   const activeAttachmentUrl = activeAttachment ? getAttachmentUrl(activeAttachment) : "";
@@ -198,94 +280,76 @@ const Library = () => {
         {!md && <MobileHeader />}
         <div className="w-full px-4 sm:px-6">
           <div className="w-full border border-border flex flex-col justify-start items-start px-4 py-3 rounded-xl bg-background text-foreground">
-          <div className="relative w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <BookOpenIcon className="w-6 h-auto opacity-80" />
-              <span className="text-lg">{t("common.library")}</span>
-            </div>
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <div className="relative w-full sm:w-48">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder={t("common.search")}
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                />
+            <div className="relative w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpenIcon className="w-6 h-auto opacity-80" />
+                <span className="text-lg">{t("common.library")}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant={viewMode === "list" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("list")}
-                  aria-label="List view"
-                >
-                  <ListIcon className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "grid" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("grid")}
-                  aria-label="Grid view"
-                >
-                  <LayoutGridIcon className="w-4 h-4" />
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <div className="relative w-full sm:w-48">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    placeholder={t("common.search")}
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                  />
+                </div>
+                <Button variant="outline" className="gap-2" onClick={handleUploadClick} disabled={isUploading}>
+                  <UploadCloudIcon className="w-4 h-4" />
+                  {t("common.upload")}
                 </Button>
               </div>
-              <Button variant="outline" onClick={handleUploadClick} disabled={isUploading}>
-                <UploadCloudIcon className="w-4 h-4" />
-                {t("common.upload")}
-              </Button>
             </div>
-          </div>
 
-          <div className="w-full flex flex-col gap-6 mt-5 mb-3">
-            {loadingState.isLoading ? (
-              <div className="w-full h-32 flex flex-col justify-center items-center">
-                <p className="w-full text-center text-base my-6 mt-8">{t("resource.fetching-data")}</p>
-              </div>
-            ) : filteredAttachments.length === 0 ? (
-              <div className="w-full mt-6 mb-8 flex flex-col justify-center items-center italic">
-                <Empty />
-                <p className="mt-4 text-muted-foreground">Upload PDFs or audio to build your library.</p>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-muted-foreground">PDF Library</h3>
-                    <span className="text-xs text-muted-foreground">{pdfAttachments.length}</span>
-                  </div>
-                  {viewMode === "grid" ? (
-                    <div className="flex flex-wrap gap-4">
-                      {pdfAttachments.map((attachment) => (
-                        <div key={attachment.name} className="w-32 sm:w-36 flex flex-col gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAttachment(attachment)}
-                            className="w-full h-32 rounded-xl border border-border bg-card/40 hover:bg-accent/20 transition-colors flex items-center justify-center"
-                          >
-                            <BookOpenIcon className="w-6 h-6 text-muted-foreground" />
-                          </button>
-                          <div className="flex items-center justify-between gap-2 px-1">
-                            <p className="text-xs text-muted-foreground truncate">{attachment.filename}</p>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenAttachment(attachment)}
-                              className="text-primary hover:opacity-80 transition-opacity"
-                              aria-label="Open PDF"
-                            >
-                              <ExternalLinkIcon className="w-3 h-3" />
-                            </button>
+            <div className="w-full flex flex-col gap-6 mt-5 mb-3">
+              {uploadQueue.length > 0 && (
+                <div className="w-full rounded-2xl border border-border bg-muted/30 p-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Uploading</div>
+                  <div className="mt-2 flex flex-col gap-2">
+                    {uploadQueue.map((item) => {
+                      const progress = item.progress ?? 0;
+                      return (
+                        <div key={item.previewUrl} className="flex flex-col gap-1 rounded-xl border border-border bg-background/60 px-3 py-2">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="truncate">{item.file.name}</span>
+                            <span>{progress}%</span>
                           </div>
-                          <div className="px-1 text-[11px] text-muted-foreground/80">
-                            {getFileTypeLabel(attachment.type)} · {formatFileSize(Number(attachment.size))}
+                          <div className="w-full h-1.5 rounded-full bg-muted/50 overflow-hidden relative">
+                            <div
+                              className="absolute inset-y-0 left-0 bg-primary transition-all duration-300 ease-out"
+                              style={{ width: `${progress}%` }}
+                            />
+                            <div
+                              className="absolute inset-x-0 bottom-0 top-0 bg-primary/20 animate-pulse"
+                              style={{ width: `${progress}%` }}
+                            />
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {loadingState.isLoading ? (
+                <div className="w-full h-32 flex flex-col justify-center items-center">
+                  <p className="w-full text-center text-base my-6 mt-8">{t("resource.fetching-data")}</p>
+                </div>
+              ) : filteredAttachments.length === 0 ? (
+                <div className="w-full mt-6 mb-8 flex flex-col justify-center items-center italic">
+                  <Empty />
+                  <p className="mt-4 text-muted-foreground">Upload PDFs or audio to build your library.</p>
+                </div>
+              ) : (
+                <>
+                {favoriteAttachments.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-muted-foreground">Favorites</h3>
+                      <span className="text-xs text-muted-foreground">{favoriteAttachments.length}</span>
                     </div>
-                  ) : (
                     <div className="flex flex-col gap-2">
-                      {pdfAttachments.map((attachment) => (
+                      {favoriteAttachments.map((attachment) => (
                         <button
                           key={attachment.name}
                           type="button"
@@ -293,7 +357,11 @@ const Library = () => {
                           className="w-full flex items-center gap-3 rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
                         >
                           <div className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center">
-                            <BookOpenIcon className="w-5 h-5 text-muted-foreground" />
+                            {isPdfAttachment(attachment) ? (
+                              <BookOpenIcon className="w-5 h-5 text-muted-foreground" />
+                            ) : (
+                              <PlayIcon className="w-5 h-5 text-muted-foreground" />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
@@ -301,11 +369,87 @@ const Library = () => {
                               {formatFileSize(Number(attachment.size))} · {dayjs(getAttachmentDate(attachment)).format("MMM D")}
                             </p>
                           </div>
-                          <span className="text-xs text-muted-foreground">{getFileTypeLabel(attachment.type)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{getFileTypeLabel(attachment.type)}</span>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                togglePinned(attachment);
+                              }}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                              aria-label="Unpin item"
+                            >
+                              <StarIcon className="w-4 h-4 fill-current" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setDeleteTarget(attachment);
+                              }}
+                              className="text-muted-foreground hover:text-destructive transition-colors"
+                              aria-label="Delete favorite"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </div>
                         </button>
                       ))}
                     </div>
-                  )}
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-muted-foreground">PDF Library</h3>
+                    <span className="text-xs text-muted-foreground">{pdfAttachments.length}</span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {pdfAttachments.map((attachment) => (
+                      <button
+                        key={attachment.name}
+                        type="button"
+                        onClick={() => handleOpenAttachment(attachment)}
+                        className="w-full flex items-center gap-3 rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
+                      >
+                        <div className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center">
+                          <BookOpenIcon className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(Number(attachment.size))} · {dayjs(getAttachmentDate(attachment)).format("MMM D")}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{getFileTypeLabel(attachment.type)}</span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              togglePinned(attachment);
+                            }}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Pin item"
+                          >
+                            <StarIcon className={pinnedSet.has(attachment.name) ? "w-4 h-4 fill-current" : "w-4 h-4"} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleteTarget(attachment);
+                            }}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                            aria-label="Delete PDF"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <Separator className="my-2" />
@@ -315,54 +459,51 @@ const Library = () => {
                     <h3 className="text-sm font-semibold text-muted-foreground">Audio Library</h3>
                     <span className="text-xs text-muted-foreground">{audioAttachments.length}</span>
                   </div>
-                  {viewMode === "grid" ? (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {audioAttachments.map((attachment) => (
-                        <div key={attachment.name} className="rounded-2xl border border-border bg-card/40 p-3 flex flex-col gap-2">
-                          <div className="flex items-center gap-3">
-                            <FileAudioIcon className="w-5 h-5 text-muted-foreground" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{attachment.filename}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatFileSize(Number(attachment.size))} · {dayjs(getAttachmentDate(attachment)).format("MMM D")}
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenAttachment(attachment)}
-                              className="text-primary hover:opacity-80 transition-opacity"
-                              aria-label="Open audio file"
-                            >
-                              <ExternalLinkIcon className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <audio className="w-full" controls preload="metadata" src={getAttachmentUrl(attachment)} />
+                  <div className="flex flex-col gap-2">
+                    {audioAttachments.map((attachment) => (
+                      <button
+                        key={attachment.name}
+                        type="button"
+                        onClick={() => handleOpenAttachment(attachment)}
+                        className="w-full flex items-center gap-3 rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
+                      >
+                        <div className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center">
+                          <PlayIcon className="w-5 h-5 text-muted-foreground" />
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      {audioAttachments.map((attachment) => (
-                        <button
-                          key={attachment.name}
-                          type="button"
-                          onClick={() => handleOpenAttachment(attachment)}
-                          className="w-full flex items-center gap-3 rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
-                        >
-                          <div className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center">
-                            <PlayIcon className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatFileSize(Number(attachment.size))} · {dayjs(getAttachmentDate(attachment)).format("MMM D")}
-                            </p>
-                          </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(Number(attachment.size))} · {dayjs(getAttachmentDate(attachment)).format("MMM D")}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{getFileTypeLabel(attachment.type)}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              togglePinned(attachment);
+                            }}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Pin item"
+                          >
+                            <StarIcon className={pinnedSet.has(attachment.name) ? "w-4 h-4 fill-current" : "w-4 h-4"} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleteTarget(attachment);
+                            }}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                            aria-label="Delete audio"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {nextPageToken && (
@@ -374,18 +515,17 @@ const Library = () => {
                 )}
               </>
             )}
+            </div>
           </div>
         </div>
-      </div>
-      <input
-        className="hidden"
-        ref={fileInputRef}
-        onChange={(event) => handleUploadFiles(event.target.files)}
-        type="file"
-        multiple
-        accept="application/pdf,audio/*,.pdf,.mp3,.m4a,.wav,.aac,.flac,.ogg"
-      />
-    </section>
+        <input
+          className="hidden"
+          ref={fileInputRef}
+          onChange={(event) => handleUploadFiles(event.target.files)}
+          type="file"
+          multiple
+        />
+      </section>
       <Sheet open={Boolean(activeAttachment)} onOpenChange={(open) => !open && setActiveAttachment(null)}>
         <SheetContent side="right" className="w-full sm:max-w-4xl">
           {activeAttachment && (
@@ -414,10 +554,32 @@ const Library = () => {
                   </div>
                 )}
               </div>
+              <div className="flex justify-end gap-2 px-4 pb-4">
+                <Button
+                  variant={pinnedSet.has(activeAttachment.name) ? "secondary" : "outline"}
+                  onClick={() => togglePinned(activeAttachment)}
+                >
+                  <StarIcon className={pinnedSet.has(activeAttachment.name) ? "w-4 h-4 fill-current" : "w-4 h-4"} />
+                  {pinnedSet.has(activeAttachment.name) ? "Pinned" : "Pin"}
+                </Button>
+                <Button variant="destructive" onClick={() => setDeleteTarget(activeAttachment)}>
+                  <TrashIcon className="w-4 h-4" />
+                  Delete
+                </Button>
+              </div>
             </>
           )}
         </SheetContent>
       </Sheet>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete file from library?"
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        onConfirm={handleDeleteAttachment}
+        confirmVariant="destructive"
+      />
     </>
   );
 };

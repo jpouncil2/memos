@@ -143,9 +143,15 @@ func (s *FileServerService) serveAttachmentFile(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "public, max-age=3600")
 	// Prevent MIME-type sniffing which could lead to XSS
 	c.Response().Header().Set("X-Content-Type-Options", "nosniff")
-	// Defense-in-depth: prevent embedding in frames and restrict content loading
-	c.Response().Header().Set("X-Frame-Options", "DENY")
-	c.Response().Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline';")
+	// Defense-in-depth: restrict content loading and framing.
+	frameOptions := "DENY"
+	contentSecurityPolicy := "default-src 'none'; style-src 'unsafe-inline';"
+	if contentType == "application/pdf" {
+		frameOptions = "SAMEORIGIN"
+		contentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'self';"
+	}
+	c.Response().Header().Set("X-Frame-Options", frameOptions)
+	c.Response().Header().Set("Content-Security-Policy", contentSecurityPolicy)
 	// Support HDR/wide color gamut display for capable browsers
 	if strings.HasPrefix(contentType, "image/") || strings.HasPrefix(contentType, "video/") {
 		c.Response().Header().Set("Color-Gamut", "srgb, p3, rec2020")

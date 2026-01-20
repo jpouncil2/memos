@@ -2,13 +2,14 @@ import { timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
 import {
   BookOpenIcon,
-  ExternalLinkIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PauseIcon,
   PlayIcon,
   SearchIcon,
   StarIcon,
   TrashIcon,
   UploadCloudIcon,
-  XIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -17,7 +18,6 @@ import MobileHeader from "@/components/MobileHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { attachmentServiceClient } from "@/connect";
 import { useDeleteAttachment } from "@/hooks/useAttachmentQueries";
@@ -49,6 +49,13 @@ const filterLibraryAttachments = (attachments: Attachment[], searchQuery: string
 
 const getAttachmentDate = (attachment: Attachment) => {
   return attachment.createTime ? timestampDate(attachment.createTime) : new Date(0);
+};
+
+const formatTime = (value: number) => {
+  if (!Number.isFinite(value) || value < 0) return "0:00";
+  const minutes = Math.floor(value / 60);
+  const seconds = Math.floor(value % 60);
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 };
 
 const loadPinnedItems = (): string[] => {
@@ -83,6 +90,7 @@ const Library = () => {
   const md = useMediaQuery("md");
   const loadingState = useLoading();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const { mutateAsync: deleteAttachment } = useDeleteAttachment();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,7 +101,10 @@ const Library = () => {
   const [uploadQueue, setUploadQueue] = useState<LocalFile[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<Attachment | null>(null);
   const [pinnedItems, setPinnedItems] = useState<string[]>(loadPinnedItems());
-  const [activeAttachment, setActiveAttachment] = useState<Attachment | null>(null);
+  const [activeAudio, setActiveAudio] = useState<Attachment | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   const fetchAttachments = useCallback(
     async (pageToken?: string, append = false) => {
@@ -138,6 +149,22 @@ const Library = () => {
       setIsLoadingMore(false);
     }
   }, [fetchAttachments, nextPageToken, isLoadingMore]);
+
+  useEffect(() => {
+    if (!activeAudio) return;
+    setCurrentTime(0);
+    setDuration(0);
+  }, [activeAudio]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.play().catch(() => setIsPlaying(false));
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying, activeAudio]);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -233,9 +260,37 @@ const Library = () => {
       .sort((a, b) => dayjs(getAttachmentDate(b)).unix() - dayjs(getAttachmentDate(a)).unix());
   }, [filteredAttachments, pinnedSet]);
 
-  const handleOpenAttachment = (attachment: Attachment) => {
-    setActiveAttachment(attachment);
+  const openAttachment = (attachment: Attachment) => {
+    window.location.assign(getAttachmentUrl(attachment));
   };
+
+  const handleAudioSelect = (attachment: Attachment) => {
+    if (activeAudio?.name === attachment.name) {
+      setIsPlaying((prev) => !prev);
+      return;
+    }
+    setActiveAudio(attachment);
+    setIsPlaying(true);
+  };
+
+  const handleAttachmentSelect = (attachment: Attachment) => {
+    if (isAudioAttachment(attachment)) {
+      handleAudioSelect(attachment);
+    } else {
+      openAttachment(attachment);
+    }
+  };
+
+  const seekBy = (delta: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const next = Math.min(Math.max(0, audio.currentTime + delta), duration || audio.duration || 0);
+    audio.currentTime = next;
+    setCurrentTime(next);
+  };
+
+  const activeAudioUrl = activeAudio ? getAttachmentUrl(activeAudio) : "";
+  const activeAudioProgress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
   const togglePinned = (attachment: Attachment) => {
     setPinnedItems((prev) => {
@@ -257,8 +312,9 @@ const Library = () => {
         savePinnedItems(next);
         return next;
       });
-      if (activeAttachment?.name === deleteTarget.name) {
-        setActiveAttachment(null);
+      if (activeAudio?.name === deleteTarget.name) {
+        setActiveAudio(null);
+        setIsPlaying(false);
       }
       toast.success("Removed from library");
     } catch (error) {
@@ -270,10 +326,6 @@ const Library = () => {
       setDeleteTarget(null);
     }
   };
-
-  const activeAttachmentUrl = activeAttachment ? getAttachmentUrl(activeAttachment) : "";
-  const activeAttachmentIsPdf = activeAttachment ? isPdfAttachment(activeAttachment) : false;
-  const activeAttachmentIsAudio = activeAttachment ? isAudioAttachment(activeAttachment) : false;
 
   return (
     <>
@@ -354,7 +406,7 @@ const Library = () => {
                         <button
                           key={attachment.name}
                           type="button"
-                          onClick={() => handleOpenAttachment(attachment)}
+                          onClick={() => handleAttachmentSelect(attachment)}
                           className="w-full flex items-center gap-3 rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
                         >
                           <div className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center">
@@ -411,7 +463,7 @@ const Library = () => {
                       <button
                         key={attachment.name}
                         type="button"
-                        onClick={() => handleOpenAttachment(attachment)}
+                        onClick={() => handleAttachmentSelect(attachment)}
                         className="w-full flex items-center gap-3 rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
                       >
                         <div className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center">
@@ -460,52 +512,159 @@ const Library = () => {
                     <h3 className="text-sm font-semibold text-muted-foreground">Audio Library</h3>
                     <span className="text-xs text-muted-foreground">{audioAttachments.length}</span>
                   </div>
+                  {activeAudio && (
+                    <div className="rounded-3xl border border-border bg-card/50 p-4">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="uppercase tracking-wide">Now Playing</span>
+                        <span>
+                          {formatTime(currentTime)} / {formatTime(duration)}
+                        </span>
+                      </div>
+                      <div className="mt-4 flex flex-col items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={() => seekBy(10)}
+                          className="w-24 h-24 rounded-full border border-border bg-muted/30 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label="Skip ahead 10 seconds"
+                        >
+                          <PlayIcon className="w-8 h-8" />
+                        </button>
+                        <div className="w-full flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>{formatTime(currentTime)}</span>
+                          <div className="flex-1 h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                            <div
+                              className="h-full bg-primary transition-all duration-300 ease-out"
+                              style={{ width: `${activeAudioProgress}%` }}
+                            />
+                          </div>
+                          <span>{formatTime(duration)}</span>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-foreground">{activeAudio.filename}</p>
+                          <p className="text-xs text-muted-foreground">{formatFileSize(Number(activeAudio.size))}</p>
+                        </div>
+                        <div className="flex items-center justify-center gap-6">
+                          <button
+                            type="button"
+                            onClick={() => seekBy(-10)}
+                            className="flex flex-col items-center text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Skip back 10 seconds"
+                          >
+                            <ChevronLeftIcon className="w-5 h-5" />
+                            <span className="text-[10px]">10s</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsPlaying((prev) => !prev)}
+                            className="w-12 h-12 rounded-full border border-border bg-background flex items-center justify-center text-foreground"
+                            aria-label={isPlaying ? "Pause playback" : "Play audio"}
+                          >
+                            {isPlaying ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => seekBy(10)}
+                            className="flex flex-col items-center text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Skip ahead 10 seconds"
+                          >
+                            <ChevronRightIcon className="w-5 h-5" />
+                            <span className="text-[10px]">10s</span>
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground text-center">Tap the circle to skip ahead 10 seconds.</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex flex-col gap-2">
                     {audioAttachments.map((attachment) => (
-                      <button
+                      <div
                         key={attachment.name}
-                        type="button"
-                        onClick={() => handleOpenAttachment(attachment)}
-                        className="w-full flex items-center gap-3 rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
+                        onClick={() => handleAudioSelect(attachment)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleAudioSelect(attachment);
+                          }
+                        }}
+                        className="w-full rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
                       >
-                        <div className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center">
-                          <PlayIcon className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatFileSize(Number(attachment.size))} · {dayjs(getAttachmentDate(attachment)).format("MMM D")}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{getFileTypeLabel(attachment.type)}</span>
+                        <div className="flex items-center gap-3">
                           <button
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
-                              togglePinned(attachment);
+                              handleAudioSelect(attachment);
                             }}
-                            className="text-muted-foreground hover:text-foreground transition-colors"
-                            aria-label="Pin item"
+                            className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label={
+                              activeAudio?.name === attachment.name && isPlaying ? "Pause audio" : "Play audio"
+                            }
                           >
-                            <StarIcon className={pinnedSet.has(attachment.name) ? "w-4 h-4 fill-current" : "w-4 h-4"} />
+                            {activeAudio?.name === attachment.name && isPlaying ? (
+                              <PauseIcon className="w-5 h-5" />
+                            ) : (
+                              <PlayIcon className="w-5 h-5" />
+                            )}
                           </button>
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setDeleteTarget(attachment);
-                            }}
-                            className="text-muted-foreground hover:text-destructive transition-colors"
-                            aria-label="Delete audio"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatFileSize(Number(attachment.size))} · {dayjs(getAttachmentDate(attachment)).format("MMM D")}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{getFileTypeLabel(attachment.type)}</span>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                togglePinned(attachment);
+                              }}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                              aria-label="Pin item"
+                            >
+                              <StarIcon className={pinnedSet.has(attachment.name) ? "w-4 h-4 fill-current" : "w-4 h-4"} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setDeleteTarget(attachment);
+                              }}
+                              className="text-muted-foreground hover:text-destructive transition-colors"
+                              aria-label="Delete audio"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </button>
+                        {activeAudio?.name === attachment.name && (
+                          <div className="mt-2 h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                            <div
+                              className="h-full bg-primary transition-all duration-300 ease-out"
+                              style={{ width: `${activeAudioProgress}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
+
+                {activeAudio && (
+                  <audio
+                    ref={audioRef}
+                    src={activeAudioUrl}
+                    preload="metadata"
+                    onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
+                    onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
+                    onEnded={() => setIsPlaying(false)}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                  />
+                )}
 
                 {nextPageToken && (
                   <div className="w-full flex flex-row justify-center items-center mt-2">
@@ -527,59 +686,6 @@ const Library = () => {
           multiple
         />
       </section>
-      <Sheet open={Boolean(activeAttachment)} onOpenChange={(open) => !open && setActiveAttachment(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl [&>button]:hidden">
-          {activeAttachment && (
-            <>
-              <SheetHeader className="border-b border-border flex-row items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveAttachment(null)}
-                  aria-label="Close preview"
-                >
-                  <XIcon className="w-4 h-4" />
-                </Button>
-                <SheetTitle className="text-base">{activeAttachment.filename}</SheetTitle>
-              </SheetHeader>
-              <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4">
-                {activeAttachmentIsPdf && (
-                  <div className="flex flex-col gap-3">
-                    <Button variant="outline" className="w-fit" onClick={() => window.open(activeAttachmentUrl, "_blank")}>
-                      <ExternalLinkIcon className="w-4 h-4" />
-                      Open in new tab
-                    </Button>
-                    <div className="w-full rounded-2xl border border-border overflow-hidden bg-background">
-                      <iframe title={activeAttachment.filename} src={activeAttachmentUrl} className="w-full h-[75vh]" />
-                    </div>
-                  </div>
-                )}
-                {activeAttachmentIsAudio && (
-                  <div className="flex flex-col gap-4">
-                    <audio className="w-full" controls preload="metadata" src={activeAttachmentUrl} />
-                    <div className="text-xs text-muted-foreground">
-                      {formatFileSize(Number(activeAttachment.size))} · {dayjs(getAttachmentDate(activeAttachment)).format("MMM D")}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-end gap-2 px-4 pb-4">
-                <Button
-                  variant={pinnedSet.has(activeAttachment.name) ? "secondary" : "outline"}
-                  onClick={() => togglePinned(activeAttachment)}
-                >
-                  <StarIcon className={pinnedSet.has(activeAttachment.name) ? "w-4 h-4 fill-current" : "w-4 h-4"} />
-                  {pinnedSet.has(activeAttachment.name) ? "Pinned" : "Pin"}
-                </Button>
-                <Button variant="destructive" onClick={() => setDeleteTarget(activeAttachment)}>
-                  <TrashIcon className="w-4 h-4" />
-                  Delete
-                </Button>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => !open && setDeleteTarget(null)}

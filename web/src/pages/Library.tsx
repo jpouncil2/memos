@@ -8,6 +8,7 @@ import {
   StarIcon,
   TrashIcon,
   UploadCloudIcon,
+  XIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -527,10 +528,18 @@ const Library = () => {
         />
       </section>
       <Sheet open={Boolean(activeAttachment)} onOpenChange={(open) => !open && setActiveAttachment(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl">
+        <SheetContent side="right" className="w-full sm:max-w-4xl [&>button]:hidden">
           {activeAttachment && (
             <>
-              <SheetHeader className="border-b border-border">
+              <SheetHeader className="border-b border-border flex-row items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveAttachment(null)}
+                  aria-label="Close preview"
+                >
+                  <XIcon className="w-4 h-4" />
+                </Button>
                 <SheetTitle className="text-base">{activeAttachment.filename}</SheetTitle>
               </SheetHeader>
               <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4">

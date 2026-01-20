@@ -1,15 +1,24 @@
 import { create } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
-import { BookOpenIcon, ExternalLinkIcon, FileAudioIcon, SearchIcon, UploadCloudIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  ExternalLinkIcon,
+  FileAudioIcon,
+  LayoutGridIcon,
+  ListIcon,
+  PlayIcon,
+  SearchIcon,
+  UploadCloudIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import AttachmentIcon from "@/components/AttachmentIcon";
 import Empty from "@/components/Empty";
 import MobileHeader from "@/components/MobileHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { attachmentServiceClient } from "@/connect";
 import useLoading from "@/hooks/useLoading";
 import useMediaQuery from "@/hooks/useMediaQuery";
@@ -62,6 +71,8 @@ const Library = () => {
   const [nextPageToken, setNextPageToken] = useState("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [activeAttachment, setActiveAttachment] = useState<Attachment | null>(null);
 
   const fetchAttachments = useCallback(
     async (pageToken?: string, append = false) => {
@@ -173,11 +184,20 @@ const Library = () => {
     [filteredAttachments],
   );
 
+  const handleOpenAttachment = (attachment: Attachment) => {
+    setActiveAttachment(attachment);
+  };
+
+  const activeAttachmentUrl = activeAttachment ? getAttachmentUrl(activeAttachment) : "";
+  const activeAttachmentIsPdf = activeAttachment ? isPdfAttachment(activeAttachment) : false;
+  const activeAttachmentIsAudio = activeAttachment ? isAudioAttachment(activeAttachment) : false;
+
   return (
-    <section className="@container w-full max-w-5xl min-h-full flex flex-col justify-start items-center sm:pt-3 md:pt-6 pb-8">
-      {!md && <MobileHeader />}
-      <div className="w-full px-4 sm:px-6">
-        <div className="w-full border border-border flex flex-col justify-start items-start px-4 py-3 rounded-xl bg-background text-foreground">
+    <>
+      <section className="@container w-full max-w-5xl min-h-full flex flex-col justify-start items-center sm:pt-3 md:pt-6 pb-8">
+        {!md && <MobileHeader />}
+        <div className="w-full px-4 sm:px-6">
+          <div className="w-full border border-border flex flex-col justify-start items-start px-4 py-3 rounded-xl bg-background text-foreground">
           <div className="relative w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <BookOpenIcon className="w-6 h-auto opacity-80" />
@@ -192,6 +212,24 @@ const Library = () => {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant={viewMode === "list" ? "secondary" : "outline"}
+                  size="icon"
+                  onClick={() => setViewMode("list")}
+                  aria-label="List view"
+                >
+                  <ListIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "grid" ? "secondary" : "outline"}
+                  size="icon"
+                  onClick={() => setViewMode("grid")}
+                  aria-label="Grid view"
+                >
+                  <LayoutGridIcon className="w-4 h-4" />
+                </Button>
               </div>
               <Button variant="outline" onClick={handleUploadClick} disabled={isUploading}>
                 <UploadCloudIcon className="w-4 h-4" />
@@ -217,23 +255,22 @@ const Library = () => {
                     <h3 className="text-sm font-semibold text-muted-foreground">PDF Library</h3>
                     <span className="text-xs text-muted-foreground">{pdfAttachments.length}</span>
                   </div>
-                  <div className="flex flex-wrap gap-4">
-                    {pdfAttachments.map((attachment) => {
-                      const attachmentUrl = getAttachmentUrl(attachment);
-                      return (
+                  {viewMode === "grid" ? (
+                    <div className="flex flex-wrap gap-4">
+                      {pdfAttachments.map((attachment) => (
                         <div key={attachment.name} className="w-32 sm:w-36 flex flex-col gap-2">
                           <button
                             type="button"
-                            onClick={() => window.open(attachmentUrl, "_blank")}
+                            onClick={() => handleOpenAttachment(attachment)}
                             className="w-full h-32 rounded-xl border border-border bg-card/40 hover:bg-accent/20 transition-colors flex items-center justify-center"
                           >
-                            <AttachmentIcon attachment={attachment} strokeWidth={0.8} />
+                            <BookOpenIcon className="w-6 h-6 text-muted-foreground" />
                           </button>
                           <div className="flex items-center justify-between gap-2 px-1">
                             <p className="text-xs text-muted-foreground truncate">{attachment.filename}</p>
                             <button
                               type="button"
-                              onClick={() => window.open(attachmentUrl, "_blank")}
+                              onClick={() => handleOpenAttachment(attachment)}
                               className="text-primary hover:opacity-80 transition-opacity"
                               aria-label="Open PDF"
                             >
@@ -244,9 +281,31 @@ const Library = () => {
                             {getFileTypeLabel(attachment.type)} · {formatFileSize(Number(attachment.size))}
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {pdfAttachments.map((attachment) => (
+                        <button
+                          key={attachment.name}
+                          type="button"
+                          onClick={() => handleOpenAttachment(attachment)}
+                          className="w-full flex items-center gap-3 rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
+                        >
+                          <div className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center">
+                            <BookOpenIcon className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatFileSize(Number(attachment.size))} · {dayjs(getAttachmentDate(attachment)).format("MMM D")}
+                            </p>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{getFileTypeLabel(attachment.type)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <Separator className="my-2" />
@@ -256,10 +315,9 @@ const Library = () => {
                     <h3 className="text-sm font-semibold text-muted-foreground">Audio Library</h3>
                     <span className="text-xs text-muted-foreground">{audioAttachments.length}</span>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {audioAttachments.map((attachment) => {
-                      const attachmentUrl = getAttachmentUrl(attachment);
-                      return (
+                  {viewMode === "grid" ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {audioAttachments.map((attachment) => (
                         <div key={attachment.name} className="rounded-2xl border border-border bg-card/40 p-3 flex flex-col gap-2">
                           <div className="flex items-center gap-3">
                             <FileAudioIcon className="w-5 h-5 text-muted-foreground" />
@@ -271,18 +329,40 @@ const Library = () => {
                             </div>
                             <button
                               type="button"
-                              onClick={() => window.open(attachmentUrl, "_blank")}
+                              onClick={() => handleOpenAttachment(attachment)}
                               className="text-primary hover:opacity-80 transition-opacity"
                               aria-label="Open audio file"
                             >
                               <ExternalLinkIcon className="w-4 h-4" />
                             </button>
                           </div>
-                          <audio className="w-full" controls preload="metadata" src={attachmentUrl} />
+                          <audio className="w-full" controls preload="metadata" src={getAttachmentUrl(attachment)} />
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {audioAttachments.map((attachment) => (
+                        <button
+                          key={attachment.name}
+                          type="button"
+                          onClick={() => handleOpenAttachment(attachment)}
+                          className="w-full flex items-center gap-3 rounded-2xl border border-border bg-card/40 px-3 py-2 text-left transition-colors hover:bg-accent/20"
+                        >
+                          <div className="h-12 w-12 rounded-xl border border-border bg-background/80 flex items-center justify-center">
+                            <PlayIcon className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatFileSize(Number(attachment.size))} · {dayjs(getAttachmentDate(attachment)).format("MMM D")}
+                            </p>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{getFileTypeLabel(attachment.type)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {nextPageToken && (
@@ -298,15 +378,49 @@ const Library = () => {
         </div>
       </div>
 
-      <input
-        className="hidden"
-        ref={fileInputRef}
-        onChange={(event) => handleUploadFiles(event.target.files)}
-        type="file"
-        multiple
-        accept="application/pdf,audio/*"
-      />
-    </section>
+          <input
+            className="hidden"
+            ref={fileInputRef}
+            onChange={(event) => handleUploadFiles(event.target.files)}
+            type="file"
+            multiple
+            accept="application/pdf,audio/*,.pdf,.mp3,.m4a,.wav,.aac,.flac,.ogg"
+          />
+        </div>
+      </section>
+      <Sheet open={Boolean(activeAttachment)} onOpenChange={(open) => !open && setActiveAttachment(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-4xl">
+          {activeAttachment && (
+            <>
+              <SheetHeader className="border-b border-border">
+                <SheetTitle className="text-base">{activeAttachment.filename}</SheetTitle>
+              </SheetHeader>
+              <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4">
+                {activeAttachmentIsPdf && (
+                  <div className="flex flex-col gap-3">
+                    <Button variant="outline" className="w-fit" onClick={() => window.open(activeAttachmentUrl, "_blank")}>
+                      <ExternalLinkIcon className="w-4 h-4" />
+                      Open in new tab
+                    </Button>
+                    <div className="w-full rounded-2xl border border-border overflow-hidden bg-background">
+                      <iframe title={activeAttachment.filename} src={activeAttachmentUrl} className="w-full h-[75vh]" />
+                    </div>
+                  </div>
+                )}
+                {activeAttachmentIsAudio && (
+                  <div className="flex flex-col gap-4">
+                    <audio className="w-full" controls preload="metadata" src={activeAttachmentUrl} />
+                    <div className="text-xs text-muted-foreground">
+                      {formatFileSize(Number(activeAttachment.size))} · {dayjs(getAttachmentDate(activeAttachment)).format("MMM D")}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };
 

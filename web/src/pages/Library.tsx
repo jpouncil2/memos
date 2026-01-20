@@ -377,17 +377,15 @@ const Library = () => {
           </div>
         </div>
       </div>
-
-          <input
-            className="hidden"
-            ref={fileInputRef}
-            onChange={(event) => handleUploadFiles(event.target.files)}
-            type="file"
-            multiple
-            accept="application/pdf,audio/*,.pdf,.mp3,.m4a,.wav,.aac,.flac,.ogg"
-          />
-        </div>
-      </section>
+      <input
+        className="hidden"
+        ref={fileInputRef}
+        onChange={(event) => handleUploadFiles(event.target.files)}
+        type="file"
+        multiple
+        accept="application/pdf,audio/*,.pdf,.mp3,.m4a,.wav,.aac,.flac,.ogg"
+      />
+    </section>
       <Sheet open={Boolean(activeAttachment)} onOpenChange={(open) => !open && setActiveAttachment(null)}>
         <SheetContent side="right" className="w-full sm:max-w-4xl">
           {activeAttachment && (

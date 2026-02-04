@@ -1,3 +1,17 @@
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend
+WORKDIR /repo
+
+# Install PNPM and dependencies for frontend build
+COPY web/package.json web/pnpm-lock.yaml /repo/web/
+RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
+WORKDIR /repo/web
+RUN pnpm install --frozen-lockfile
+
+# Build frontend into server/router/frontend/dist
+COPY web/ /repo/web/
+COPY proto/ /repo/proto/
+RUN pnpm release
+
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS backend
 WORKDIR /backend-build
 
@@ -11,9 +25,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 # Copy source code (use .dockerignore to exclude unnecessary files)
 COPY . .
+COPY --from=frontend /repo/server/router/frontend/dist /backend-build/server/router/frontend/dist
 
-# Please build frontend first, so that the static files are available.
-# Refer to `pnpm release` in package.json for the build command.
 ARG TARGETOS TARGETARCH VERSION COMMIT
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \

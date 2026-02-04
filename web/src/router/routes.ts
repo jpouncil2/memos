@@ -1,6 +1,7 @@
 export const ROUTES = {
   ROOT: "/",
   ATTACHMENTS: "/attachments",
+  AGENTS: "/agents",
   INBOX: "/inbox",
   ARCHIVED: "/archived",
   SETTING: "/setting",

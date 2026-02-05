@@ -94,6 +94,7 @@ func (s *APIV1Service) RegisterGateway(ctx context.Context, echoServer *echo.Ech
 	gwMux := runtime.NewServeMux(
 		runtime.WithMiddlewares(gatewayAuthMiddleware),
 	)
+	s.registerAgentsRoutes(echoServer)
 	if err := v1pb.RegisterInstanceServiceHandlerServer(ctx, gwMux, s); err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 import { ExternalLinkIcon, WorkflowIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import { getAccessToken } from "@/auth-state";
 import MobileHeader from "@/components/MobileHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,11 +19,6 @@ const RANGE_OPTIONS = [
   { value: "previousMonth", label: "Previous month" },
   { value: "custom", label: "Custom range" },
 ];
-
-const WEBHOOK_URLS = {
-  test: "https://n8n.srv865816.hstgr.cloud/webhook-test/memos-digest",
-  prod: "https://n8n.srv865816.hstgr.cloud/webhook/memos-digest",
-};
 
 type DigestResponse =
   | { status: "ok"; summary?: string; memoId?: string; memoUrl?: string; message?: string }
@@ -70,10 +66,17 @@ const Agents = () => {
       : { range, timezone, title: "Summary of Memos" };
 
     try {
-      const webhookUrl = import.meta.env.DEV ? WEBHOOK_URLS.test : WEBHOOK_URLS.prod;
-      const response = await fetch(webhookUrl, {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      const accessToken = getAccessToken();
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+
+      const response = await fetch("/api/v1/agents/digest", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(payload),
       });
 

@@ -76,6 +76,8 @@
     "referenced-by": "Referenced by",
     "referencing": "Referencing",
     "relations": "Relations",
+    "refreshing": "Refreshing...",
+    "release-to-refresh": "Release to refresh",
     "remember-me": "Remember me",
     "rename": "Rename",
     "reset": "Reset",

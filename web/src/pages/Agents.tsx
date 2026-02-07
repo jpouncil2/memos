@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { ExternalLinkIcon, WorkflowIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -8,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import useMediaQuery from "@/hooks/useMediaQuery";
+import { memoKeys } from "@/hooks/useMemoQueries";
+import { userKeys } from "@/hooks/useUserQueries";
 
 const RANGE_OPTIONS = [
   { value: "last7Days", label: "Last 7 days" },
@@ -27,6 +30,7 @@ type DigestResponse =
 
 const Agents = () => {
   const md = useMediaQuery("md");
+  const queryClient = useQueryClient();
   const [range, setRange] = useState("last14Days");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -89,6 +93,10 @@ const Agents = () => {
 
       if (data.status === "ok") {
         toast.success("Summary created.");
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: memoKeys.lists() }),
+          queryClient.invalidateQueries({ queryKey: userKeys.stats() }),
+        ]);
       } else if (data.status === "empty") {
         toast.success(data.message || "No memos in this range.");
       } else {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { userServiceClient } from "@/connect";
 import { useView } from "@/contexts/ViewContext";
 import { DEFAULT_LIST_MEMOS_PAGE_SIZE } from "@/helpers/consts";
-import { useInfiniteMemos } from "@/hooks/useMemoQueries";
+import { memoKeys, useInfiniteMemos } from "@/hooks/useMemoQueries";
 import { userKeys } from "@/hooks/useUserQueries";
 import { Routes } from "@/router";
 import { State } from "@/types/proto/api/v1/common_pb";
@@ -85,6 +85,9 @@ const PagedMemoList = (props: Props) => {
   const t = useTranslate();
   const { layout } = useView();
   const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const touchStartYRef = useRef<number | null>(null);
 
   // Show memo editor only on the root route
   const showMemoEditor = Boolean(matchPath(Routes.ROOT, window.location.pathname));
@@ -148,8 +151,57 @@ const PagedMemoList = (props: Props) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  useEffect(() => {
+    const handleTouchStart = (event: TouchEvent) => {
+      if (window.scrollY > 0) return;
+      touchStartYRef.current = event.touches[0]?.clientY ?? null;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (touchStartYRef.current === null || window.scrollY > 0) return;
+      const currentY = event.touches[0]?.clientY ?? 0;
+      const delta = Math.max(0, currentY - touchStartYRef.current);
+      if (delta > 0) {
+        setPullDistance(Math.min(delta, 120));
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (touchStartYRef.current === null) return;
+      const shouldRefresh = pullDistance > 60;
+      touchStartYRef.current = null;
+      setPullDistance(0);
+      if (!shouldRefresh) return;
+
+      setIsRefreshing(true);
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: memoKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: userKeys.stats() }),
+      ])
+        .catch(() => undefined)
+        .finally(() => {
+          setIsRefreshing(false);
+        });
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd);
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [pullDistance, queryClient]);
+
   const children = (
     <div className="flex flex-col justify-start items-start w-full max-w-full">
+      <div
+        className="w-full flex flex-row justify-center items-center text-xs text-muted-foreground transition-all"
+        style={{ height: pullDistance ? `${pullDistance}px` : isRefreshing ? "48px" : "0px" }}
+      >
+        {isRefreshing ? t("common.refreshing") : pullDistance > 40 ? t("common.release-to-refresh") : ""}
+      </div>
       {/* Show skeleton loader during initial load */}
       {isLoading ? (
         <Skeleton showCreator={props.showCreator} count={4} />

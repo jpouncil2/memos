@@ -58,12 +58,15 @@ func (*MetadataInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc 
 			return resp, err
 		}
 
-		// Prevent browser caching of API responses to avoid stale data issues
-		// See: https://github.com/usememos/memos/issues/5470
-		if !isNilAnyResponse(resp) && resp.Header() != nil {
-			resp.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			resp.Header().Set("Pragma", "no-cache")
-			resp.Header().Set("Expires", "0")
+		// Prevent browser caching of API responses to avoid stale data issues.
+		// Error paths can return a nil response, so guard before touching headers.
+		if !isNilAnyResponse(resp) {
+			headers := resp.Header()
+			if headers != nil {
+				headers.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+				headers.Set("Pragma", "no-cache")
+				headers.Set("Expires", "0")
+			}
 		}
 
 		return resp, err
@@ -74,8 +77,12 @@ func isNilAnyResponse(resp connect.AnyResponse) bool {
 	if resp == nil {
 		return true
 	}
-	val := reflect.ValueOf(resp)
-	return val.Kind() == reflect.Ptr && val.IsNil()
+	// connect.AnyResponse is an interface; it may hold a typed nil pointer.
+	value := reflect.ValueOf(resp)
+	if value.Kind() == reflect.Pointer && value.IsNil() {
+		return true
+	}
+	return false
 }
 
 func (*MetadataInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {

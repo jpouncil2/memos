@@ -1,4 +1,4 @@
-import { KanbanSquareIcon, LibraryIcon, PaperclipIcon, UserCircleIcon, WorkflowIcon } from "lucide-react";
+import { CheckIcon, KanbanSquareIcon, LibraryIcon, PaperclipIcon, UserCircleIcon, WorkflowIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -43,6 +43,12 @@ const Navigation = (props: Props) => {
     title: t("common.library"),
     icon: <LibraryIcon className="w-6 h-auto shrink-0" />,
   };
+  const checklistNavLink: NavLinkItem = {
+    id: "header-checklist",
+    path: Routes.CHECKLIST,
+    title: t("common.checklist"),
+    icon: <CheckIcon className="w-6 h-auto shrink-0" />,
+  };
   const boardsNavLink: NavLinkItem = {
     id: "header-boards",
     path: Routes.BOARDS,
@@ -63,7 +69,7 @@ const Navigation = (props: Props) => {
   };
 
   const navLinks: NavLinkItem[] = currentUser
-    ? [homeNavLink, libraryNavLink, attachmentsNavLink, boardsNavLink, agentsNavLink]
+    ? [homeNavLink, checklistNavLink, libraryNavLink, attachmentsNavLink, boardsNavLink, agentsNavLink]
     : [signInNavLink];
 
   return (

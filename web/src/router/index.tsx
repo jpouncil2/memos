@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 const AdminSignIn = lazy(() => import("@/pages/AdminSignIn"));
 const Archived = lazy(() => import("@/pages/Archived"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
+const DailyChecklist = lazy(() => import("@/pages/DailyChecklist"));
 const MemoDetail = lazy(() => import("@/pages/MemoDetail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const PermissionDenied = lazy(() => import("@/pages/PermissionDenied"));
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
           },
           { path: Routes.ATTACHMENTS, element: <Attachments /> },
           { path: Routes.LIBRARY, element: <Library /> },
+          { path: Routes.CHECKLIST, element: <DailyChecklist /> },
           { path: Routes.BOARDS, element: <Board /> },
           { path: Routes.AGENTS, element: <Agents /> },
           { path: Routes.SETTING, element: <Setting /> },

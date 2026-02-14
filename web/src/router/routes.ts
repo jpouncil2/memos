@@ -2,6 +2,7 @@ export const ROUTES = {
   ROOT: "/",
   LIBRARY: "/library",
   ATTACHMENTS: "/attachments",
+  CHECKLIST: "/checklist",
   INBOX: "/inbox",
   ARCHIVED: "/archived",
   BOARDS: "/boards",

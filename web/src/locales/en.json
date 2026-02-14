@@ -29,6 +29,7 @@
     "calendar": "Calendar",
     "cancel": "Cancel",
     "change": "Change",
+    "checklist": "Checklist",
     "clear": "Clear",
     "close": "Close",
     "collapse": "Collapse",
@@ -443,6 +444,12 @@
       "sunday": "Sunday",
       "week-start-day": "Week start day"
     }
+  },
+  "checklist": {
+    "title": "Daily Checklist",
+    "streak": "Streak",
+    "reset-hint": "Resets at 5:00 AM",
+    "empty": "Your checklist will appear here."
   },
   "tag": {
     "all-tags": "All Tags",

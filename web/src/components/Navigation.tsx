@@ -1,4 +1,5 @@
-import { BellIcon, BookOpenIcon, EarthIcon, KanbanSquareIcon, LibraryIcon, PaperclipIcon, UserCircleIcon } from "lucide-react";
+import { BellIcon, CheckIcon, EarthIcon, LibraryIcon, PaperclipIcon, UserCircleIcon } from "lucide-react";
+import { BookOpenIcon, KanbanSquareIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -58,6 +59,12 @@ const Navigation = (props: Props) => {
     title: t("common.attachments"),
     icon: <PaperclipIcon className="w-6 h-auto shrink-0" />,
   };
+  const checklistNavLink: NavLinkItem = {
+    id: "header-checklist",
+    path: Routes.CHECKLIST,
+    title: t("common.checklist"),
+    icon: <CheckIcon className="w-6 h-auto shrink-0" />,
+  };
   const unreadCount = notifications.filter((n) => n.status === UserNotification_Status.UNREAD).length;
   const inboxNavLink: NavLinkItem = {
     id: "header-inbox",
@@ -82,7 +89,7 @@ const Navigation = (props: Props) => {
   };
 
   const navLinks: NavLinkItem[] = currentUser
-    ? [homeNavLink, libraryNavLink, boardNavLink, exploreNavLink, attachmentsNavLink, inboxNavLink]
+    ? [homeNavLink, checklistNavLink, libraryNavLink, boardNavLink, exploreNavLink, attachmentsNavLink, inboxNavLink]
     : [exploreNavLink, signInNavLink];
 
   return (

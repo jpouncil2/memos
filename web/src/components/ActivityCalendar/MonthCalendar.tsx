@@ -10,7 +10,7 @@ import { useCalendarMatrix } from "./useCalendar";
 import { getTooltipText } from "./utils";
 
 export const MonthCalendar = memo((props: MonthCalendarProps) => {
-  const { month, data, maxCount, size = "default", onClick, className } = props;
+  const { month, data, maxCount, size = "default", onClick, tooltipFormatter, className } = props;
   const t = useTranslate();
   const { generalSetting } = useInstance();
 
@@ -43,7 +43,7 @@ export const MonthCalendar = memo((props: MonthCalendarProps) => {
       <div className={cn("grid grid-cols-7", sizeConfig.gap)}>
         {weeks.map((week, weekIndex) =>
           week.days.map((day, dayIndex) => {
-            const tooltipText = getTooltipText(day.count, day.date, t);
+            const tooltipText = tooltipFormatter ? tooltipFormatter(day.count, day.date) : getTooltipText(day.count, day.date, t);
 
             return (
               <CalendarCell

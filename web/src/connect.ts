@@ -118,6 +118,10 @@ const authInterceptor: Interceptor = (next) => async (req) => {
       return await next(req);
     } catch (refreshError) {
       redirectOnAuthFailure();
+      if (refreshError instanceof ConnectError && refreshError.code === Code.Unauthenticated) {
+        // Keep the original request error semantic (unauthenticated) when refresh token is missing/expired.
+        throw error;
+      }
       throw refreshError;
     }
   }

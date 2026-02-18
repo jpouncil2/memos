@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { userServiceClient } from "@/connect";
 import { useView } from "@/contexts/ViewContext";
 import { DEFAULT_LIST_MEMOS_PAGE_SIZE } from "@/helpers/consts";
-import { useInfiniteMemos } from "@/hooks/useMemoQueries";
+import { memoKeys, useInfiniteMemos } from "@/hooks/useMemoQueries";
 import { userKeys } from "@/hooks/useUserQueries";
 import { useMediaQuery, useStandaloneMode } from "@/hooks";
 import { Routes } from "@/router";
@@ -30,6 +30,7 @@ interface Props {
   filter?: string;
   pageSize?: number;
   showCreator?: boolean;
+  enabled?: boolean;
 }
 
 function useAutoFetchWhenNotScrollable({
@@ -87,6 +88,9 @@ const PagedMemoList = (props: Props) => {
   const t = useTranslate();
   const { layout } = useView();
   const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const touchStartYRef = useRef<number | null>(null);
 
   const md = useMediaQuery("md");
   const isStandalone = useStandaloneMode();
@@ -95,13 +99,15 @@ const PagedMemoList = (props: Props) => {
   // In PWA mode on mobile, we hide the top editor since it's moved to the bottom bar in MainLayout
   const showMemoEditor = Boolean(matchPath(Routes.ROOT, window.location.pathname)) && !(isStandalone && !md);
 
-  // Use React Query's infinite query for pagination
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteMemos({
-    state: props.state || State.NORMAL,
-    orderBy: props.orderBy || "display_time desc",
-    filter: props.filter,
-    pageSize: props.pageSize || DEFAULT_LIST_MEMOS_PAGE_SIZE,
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteMemos(
+    {
+      state: props.state || State.NORMAL,
+      orderBy: props.orderBy || "display_time desc",
+      filter: props.filter,
+      pageSize: props.pageSize || DEFAULT_LIST_MEMOS_PAGE_SIZE,
+    },
+    { enabled: props.enabled ?? true },
+  );
 
   // Flatten pages into a single array of memos
   const memos = useMemo(() => data?.pages.flatMap((page) => page.memos) || [], [data]);
@@ -152,8 +158,57 @@ const PagedMemoList = (props: Props) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  useEffect(() => {
+    const handleTouchStart = (event: TouchEvent) => {
+      if (window.scrollY > 0) return;
+      touchStartYRef.current = event.touches[0]?.clientY ?? null;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (touchStartYRef.current === null || window.scrollY > 0) return;
+      const currentY = event.touches[0]?.clientY ?? 0;
+      const delta = Math.max(0, currentY - touchStartYRef.current);
+      if (delta > 0) {
+        setPullDistance(Math.min(delta, 120));
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (touchStartYRef.current === null) return;
+      const shouldRefresh = pullDistance > 60;
+      touchStartYRef.current = null;
+      setPullDistance(0);
+      if (!shouldRefresh) return;
+
+      setIsRefreshing(true);
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: memoKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: userKeys.stats() }),
+      ])
+        .catch(() => undefined)
+        .finally(() => {
+          setIsRefreshing(false);
+        });
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd);
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [pullDistance, queryClient]);
+
   const children = (
     <div className="flex flex-col justify-start items-start w-full max-w-full">
+      <div
+        className="w-full flex flex-row justify-center items-center text-xs text-muted-foreground transition-all"
+        style={{ height: pullDistance ? `${pullDistance}px` : isRefreshing ? "48px" : "0px" }}
+      >
+        {isRefreshing ? t("common.refreshing") : pullDistance > 40 ? t("common.release-to-refresh") : ""}
+      </div>
       {/* Show skeleton loader during initial load */}
       {isLoading ? (
         <Skeleton showCreator={props.showCreator} count={4} />

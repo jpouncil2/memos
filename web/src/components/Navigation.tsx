@@ -1,4 +1,4 @@
-import { BellIcon, BookOpenIcon, EarthIcon, KanbanSquareIcon, LibraryIcon, PaperclipIcon, UserCircleIcon } from "lucide-react";
+import { BellIcon, EarthIcon, LibraryIcon, PaperclipIcon, UserCircleIcon, WorkflowIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -40,23 +40,17 @@ const Navigation = (props: Props) => {
     title: t("common.explore"),
     icon: <EarthIcon className="w-6 h-auto shrink-0" />,
   };
-  const libraryNavLink: NavLinkItem = {
-    id: "header-library",
-    path: Routes.LIBRARY,
-    title: t("common.library"),
-    icon: <BookOpenIcon className="w-6 h-auto shrink-0" />,
-  };
-  const boardNavLink: NavLinkItem = {
-    id: "header-boards",
-    path: Routes.BOARDS,
-    title: "Boards",
-    icon: <KanbanSquareIcon className="w-6 h-auto shrink-0" />,
-  };
   const attachmentsNavLink: NavLinkItem = {
     id: "header-attachments",
     path: Routes.ATTACHMENTS,
     title: t("common.attachments"),
     icon: <PaperclipIcon className="w-6 h-auto shrink-0" />,
+  };
+  const agentsNavLink: NavLinkItem = {
+    id: "header-agents",
+    path: Routes.AGENTS,
+    title: t("common.agents"),
+    icon: <WorkflowIcon className="w-6 h-auto shrink-0" />,
   };
   const unreadCount = notifications.filter((n) => n.status === UserNotification_Status.UNREAD).length;
   const inboxNavLink: NavLinkItem = {
@@ -82,12 +76,12 @@ const Navigation = (props: Props) => {
   };
 
   const navLinks: NavLinkItem[] = currentUser
-    ? [homeNavLink, libraryNavLink, boardNavLink, exploreNavLink, attachmentsNavLink, inboxNavLink]
+    ? [homeNavLink, exploreNavLink, attachmentsNavLink, agentsNavLink, inboxNavLink]
     : [exploreNavLink, signInNavLink];
 
   return (
-    <header className={cn("w-full h-full overflow-auto flex flex-col justify-between items-start gap-4 hide-scrollbar", className)}>
-      <div className="w-full px-1 py-1 flex flex-col justify-start items-start space-y-2 overflow-auto overflow-x-hidden hide-scrollbar shrink">
+    <header className={cn("w-full h-full overflow-auto flex flex-col justify-between items-start gap-4", className)}>
+      <div className="w-full px-1 py-1 flex flex-col justify-start items-start space-y-2 overflow-auto overflow-x-hidden shrink">
         <NavLink className="mb-3 cursor-default" to={currentUser ? Routes.ROOT : Routes.EXPLORE}>
           <MemosLogo collapsed={collapsed} />
         </NavLink>

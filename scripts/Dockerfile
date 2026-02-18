@@ -1,9 +1,12 @@
+# syntax=docker/dockerfile:1.7
 # Build the frontend
 FROM node:22-alpine AS frontend
 WORKDIR /web
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY web/package.json web/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile
 COPY web/ .
 COPY proto/ /proto
 ARG NODE_OPTIONS="--max-old-space-size=1536"
@@ -18,7 +21,7 @@ RUN apk add --no-cache git ca-certificates
 
 # Copy go mod files and download dependencies (cached layer)
 COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod \
+RUN --mount=type=cache,id=gomod-cache,target=/go/pkg/mod \
     go mod download
 
 # Copy source code and the built frontend
@@ -27,8 +30,8 @@ COPY --from=frontend /server/router/frontend/dist ./server/router/frontend/dist
 
 # Build the backend
 ARG TARGETOS TARGETARCH VERSION COMMIT
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=type=cache,id=gomod-cache,target=/go/pkg/mod \
+    --mount=type=cache,id=gobuild-cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build \
     -trimpath \

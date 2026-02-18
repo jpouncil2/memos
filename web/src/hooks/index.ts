@@ -7,6 +7,6 @@ export { default as useMediaQuery } from "./useMediaQuery";
 export * from "./useMemoFilters";
 export * from "./useMemoSorting";
 export * from "./useNavigateTo";
+export { default as useStandaloneMode } from "./useStandaloneMode";
 export * from "./useUserLocale";
 export * from "./useUserTheme";
-export { default as useStandaloneMode } from "./useStandaloneMode";

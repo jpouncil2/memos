@@ -1,12 +1,15 @@
 import { create } from "@bufbuild/protobuf";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { PaperclipIcon, PlusIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import MemoAttachment from "@/components/MemoAttachment";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import { attachmentServiceClient } from "@/connect";
 import { useBoardCardDefaults } from "@/hooks/useBoardCardDefaults";
-import useCurrentUser from "@/hooks/useCurrentUser";
 import {
   boardKeys,
   useCard,
@@ -26,14 +29,11 @@ import {
   useUpsertCardPlacement,
   useUpsertCardRelation,
 } from "@/hooks/useBoardQueries";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
-import type { BoardColumn, CardRelation } from "@/types/proto/api/v1/board_service_pb";
-import { CardRelationType } from "@/types/proto/api/v1/board_service_pb";
 import { AttachmentSchema } from "@/types/proto/api/v1/attachment_service_pb";
-import MemoAttachment from "@/components/MemoAttachment";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import type { BoardColumn } from "@/types/proto/api/v1/board_service_pb";
+import { CardRelationType } from "@/types/proto/api/v1/board_service_pb";
 
 interface Props {
   cardName: string | null;
@@ -221,7 +221,7 @@ const CardDetailSheet = ({ cardName, open, onOpenChange, boardName, columns }: P
       return;
     }
     if (normalized) {
-      const relation: CardRelation = {
+      const relation = {
         name: "",
         card: card.name,
         relatedCard: normalized,
@@ -293,7 +293,7 @@ const CardDetailSheet = ({ cardName, open, onOpenChange, boardName, columns }: P
                   )}
                 >
                   <option value="">Unassigned</option>
-                  {currentUser?.name && <option value={currentUser.name}>{currentUser.nickname || currentUser.username}</option>}
+                  {currentUser?.name && <option value={currentUser.name}>{currentUser.username}</option>}
                 </select>
               </div>
               <div className="space-y-1">
@@ -415,12 +415,7 @@ const CardDetailSheet = ({ cardName, open, onOpenChange, boardName, columns }: P
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Epic</label>
-                <Input
-                  value={epicLink}
-                  onChange={(e) => setEpicLink(e.target.value)}
-                  onBlur={handleEpicUpdate}
-                  placeholder="cards/..."
-                />
+                <Input value={epicLink} onChange={(e) => setEpicLink(e.target.value)} onBlur={handleEpicUpdate} placeholder="cards/..." />
               </div>
             </div>
           </div>
@@ -460,12 +455,7 @@ const CardDetailSheet = ({ cardName, open, onOpenChange, boardName, columns }: P
                 </div>
               ))}
               <div className="flex items-center gap-2">
-                <Input
-                  value={newSubtask}
-                  onChange={(e) => setNewSubtask(e.target.value)}
-                  placeholder="Add subtask"
-                  className="h-8"
-                />
+                <Input value={newSubtask} onChange={(e) => setNewSubtask(e.target.value)} placeholder="Add subtask" className="h-8" />
                 <button
                   type="button"
                   className="inline-flex items-center gap-1 text-sm text-primary"

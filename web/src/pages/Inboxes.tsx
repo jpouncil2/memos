@@ -109,7 +109,7 @@ const Inboxes = () => {
                   if (notification.type === UserNotification_Type.MEMO_COMMENT) {
                     return <MemoCommentMessage key={notification.name} notification={notification} />;
                   }
-                  if (notification.type === UserNotification_Type.SYSTEM) {
+                  if (notification.type === UserNotification_Type.TYPE_UNSPECIFIED) {
                     return <SystemNotificationMessage key={notification.name} notification={notification} />;
                   }
                   return null;

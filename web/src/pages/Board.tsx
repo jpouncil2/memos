@@ -1,6 +1,7 @@
+import { PlusIcon } from "lucide-react";
 import type { DragEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { PlusIcon } from "lucide-react";
+import CardDetailSheet from "@/components/Board/CardDetailSheet";
 import { useBoardCardDefaults } from "@/hooks/useBoardCardDefaults";
 import {
   useBoardColumns,
@@ -10,11 +11,10 @@ import {
   useCreateBoard,
   useCreateBoardColumn,
   useCreateCard,
-  useUpsertCardPlacement,
   useUpdateCard,
+  useUpsertCardPlacement,
 } from "@/hooks/useBoardQueries";
 import { cn } from "@/lib/utils";
-import CardDetailSheet from "@/components/Board/CardDetailSheet";
 
 const Board = () => {
   const { data: boardsResponse } = useBoards();
@@ -44,7 +44,7 @@ const Board = () => {
   const placements = placementsResponse?.placements ?? [];
 
   const cardMap = useMemo(() => {
-    const map = new Map<string, typeof cards[number]>();
+    const map = new Map<string, (typeof cards)[number]>();
     for (const card of cards) {
       map.set(card.name, card);
     }
@@ -109,19 +109,16 @@ const Board = () => {
     if (defaults.defaultSize) {
       nextCard.size = defaults.defaultSize;
     }
-    createCard.mutate(
-      nextCard,
-      {
-        onSuccess: (card) => {
-          upsertPlacement.mutate({
-            board: activeBoard,
-            column: columnName,
-            card: card.name,
-            order: getNextOrder(columnName),
-          });
-        },
+    createCard.mutate(nextCard, {
+      onSuccess: (card) => {
+        upsertPlacement.mutate({
+          board: activeBoard,
+          column: columnName,
+          card: card.name,
+          order: getNextOrder(columnName),
+        });
       },
-    );
+    });
   };
 
   const handleDrop = (event: DragEvent<HTMLDivElement>, columnName: string) => {
@@ -145,7 +142,11 @@ const Board = () => {
       {boards.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border p-10 text-center">
           <p className="text-sm text-muted-foreground">No boards yet.</p>
-          <button type="button" className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm" onClick={handleCreateBoard}>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm"
+            onClick={handleCreateBoard}
+          >
             <PlusIcon className="h-4 w-4" />
             Create your first board
           </button>

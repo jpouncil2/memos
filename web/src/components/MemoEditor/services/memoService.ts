@@ -86,22 +86,22 @@ export const memoService = {
 
     // Simple poll to wait for the background upload hook to finish
     // A better way would be a shared promise map, but this works given our state structure
-    while (state.localFiles.some(f => !f.attachment && !f.error)) {
+    while (state.localFiles.some((f) => !f.attachment && !f.error)) {
       if (Date.now() - startTime > timeout) throw new Error("Upload timeout");
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       // Note: In a real React app, 'state' here is stale if passed as argument.
       // But MemoEditor passes the 'state' from context which is fresh at call time.
       // However, the subsequent loop needs to see updates.
       // Actually, it's better to pass the completed attachments directly if we had them.
-      // Since memoService.save is called ONCE, we should probably check the state again or 
+      // Since memoService.save is called ONCE, we should probably check the state again or
       // rely on the fact that if they aren't done, we wait.
     }
 
-    if (state.localFiles.some(f => f.error)) {
+    if (state.localFiles.some((f) => f.error)) {
       throw new Error("One or more files failed to upload");
     }
 
-    const newAttachments = state.localFiles.map(f => f.attachment!).filter(Boolean);
+    const newAttachments = state.localFiles.map((f) => f.attachment!).filter(Boolean);
     const allAttachments = [...state.metadata.attachments, ...newAttachments];
 
     // 2. Update existing memo
@@ -133,9 +133,9 @@ export const memoService = {
 
     const memo = options.parentMemoName
       ? await memoServiceClient.createMemoComment({
-        name: options.parentMemoName,
-        comment: memoData,
-      })
+          name: options.parentMemoName,
+          comment: memoData,
+        })
       : await memoServiceClient.createMemo({ memo: memoData });
 
     return { memoName: memo.name, hasChanges: true };

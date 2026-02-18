@@ -2,20 +2,10 @@ import { create } from "@bufbuild/protobuf";
 import { FieldMaskSchema } from "@bufbuild/protobuf/wkt";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { boardServiceClient } from "@/connect";
-import type {
-  Board,
-  BoardColumn,
-  Card,
-  CardComment,
-  CardPlacement,
-  CardRelation,
-  CardSubtask,
-  CardTimeEntry,
-  ListBoardsRequest,
-  ListCardsRequest,
-} from "@/types/proto/api/v1/board_service_pb";
+import type { ListBoardsRequest, ListCardsRequest } from "@/types/proto/api/v1/board_service_pb";
 import {
   BoardColumnSchema,
+  BoardSchema,
   CardCommentSchema,
   CardPlacementSchema,
   CardSchema,
@@ -24,6 +14,8 @@ import {
   ListBoardsRequestSchema,
   ListCardsRequestSchema,
 } from "@/types/proto/api/v1/board_service_pb";
+
+type MsgInput = Record<string, unknown>;
 
 export const boardKeys = {
   all: ["boards"] as const,
@@ -53,8 +45,8 @@ export function useCreateBoard() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (board: Board) => {
-      return await boardServiceClient.createBoard({ board });
+    mutationFn: async (board: MsgInput) => {
+      return await boardServiceClient.createBoard({ board: create(BoardSchema, board) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: boardKeys.lists() });
@@ -77,8 +69,8 @@ export function useCreateBoardColumn() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ parent, column }: { parent: string; column: BoardColumn }) => {
-      return await boardServiceClient.createBoardColumn({ parent, column: create(BoardColumnSchema, column as Record<string, unknown>) });
+    mutationFn: async ({ parent, column }: { parent: string; column: MsgInput }) => {
+      return await boardServiceClient.createBoardColumn({ parent, column: create(BoardColumnSchema, column) });
     },
     onSuccess: (_column, variables) => {
       queryClient.invalidateQueries({ queryKey: boardKeys.columns(variables.parent) });
@@ -90,9 +82,9 @@ export function useUpdateBoardColumn() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ column, updateMask }: { column: Partial<BoardColumn>; updateMask: string[] }) => {
+    mutationFn: async ({ column, updateMask }: { column: MsgInput; updateMask: string[] }) => {
       return await boardServiceClient.updateBoardColumn({
-        column: create(BoardColumnSchema, column as Record<string, unknown>),
+        column: create(BoardColumnSchema, column),
         updateMask: create(FieldMaskSchema, { paths: updateMask }),
       });
     },
@@ -129,8 +121,8 @@ export function useCreateCard() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (card: Card) => {
-      return await boardServiceClient.createCard({ card });
+    mutationFn: async (card: MsgInput) => {
+      return await boardServiceClient.createCard({ card: create(CardSchema, card) });
     },
     onSuccess: (card) => {
       queryClient.invalidateQueries({ queryKey: boardKeys.cards() });
@@ -143,9 +135,9 @@ export function useUpdateCard() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ update, updateMask }: { update: Partial<Card>; updateMask: string[] }) => {
+    mutationFn: async ({ update, updateMask }: { update: MsgInput; updateMask: string[] }) => {
       return await boardServiceClient.updateCard({
-        card: create(CardSchema, update as Record<string, unknown>),
+        card: create(CardSchema, update),
         updateMask: create(FieldMaskSchema, { paths: updateMask }),
       });
     },
@@ -188,8 +180,8 @@ export function useUpsertCardPlacement() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (placement: CardPlacement) => {
-      return await boardServiceClient.upsertCardPlacement({ placement: create(CardPlacementSchema, placement as Record<string, unknown>) });
+    mutationFn: async (placement: MsgInput) => {
+      return await boardServiceClient.upsertCardPlacement({ placement: create(CardPlacementSchema, placement) });
     },
     onSuccess: (placement) => {
       queryClient.invalidateQueries({ queryKey: boardKeys.placements(placement.board) });
@@ -213,7 +205,7 @@ export function useUpsertCardRelation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (relation: CardRelation) => {
+    mutationFn: async (relation: { card: string; relatedCard: string; type: number }) => {
       return await boardServiceClient.upsertCardRelation({
         name: relation.card,
         relatedCard: relation.relatedCard,
@@ -258,8 +250,8 @@ export function useCreateCardSubtask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ parent, subtask }: { parent: string; subtask: CardSubtask }) => {
-      return await boardServiceClient.createCardSubtask({ parent, subtask: create(CardSubtaskSchema, subtask as Record<string, unknown>) });
+    mutationFn: async ({ parent, subtask }: { parent: string; subtask: MsgInput }) => {
+      return await boardServiceClient.createCardSubtask({ parent, subtask: create(CardSubtaskSchema, subtask) });
     },
     onSuccess: (_subtask, variables) => {
       queryClient.invalidateQueries({ queryKey: boardKeys.subtasks(variables.parent) });
@@ -271,9 +263,9 @@ export function useUpdateCardSubtask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ subtask, updateMask }: { subtask: Partial<CardSubtask>; updateMask: string[] }) => {
+    mutationFn: async ({ subtask, updateMask }: { subtask: MsgInput; updateMask: string[] }) => {
       return await boardServiceClient.updateCardSubtask({
-        subtask: create(CardSubtaskSchema, subtask as Record<string, unknown>),
+        subtask: create(CardSubtaskSchema, subtask),
         updateMask: create(FieldMaskSchema, { paths: updateMask }),
       });
     },
@@ -313,8 +305,8 @@ export function useCreateCardComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ parent, comment }: { parent: string; comment: CardComment }) => {
-      return await boardServiceClient.createCardComment({ parent, comment: create(CardCommentSchema, comment as Record<string, unknown>) });
+    mutationFn: async ({ parent, comment }: { parent: string; comment: MsgInput }) => {
+      return await boardServiceClient.createCardComment({ parent, comment: create(CardCommentSchema, comment) });
     },
     onSuccess: (_comment, variables) => {
       queryClient.invalidateQueries({ queryKey: boardKeys.comments(variables.parent) });
@@ -337,8 +329,8 @@ export function useCreateCardTimeEntry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ parent, timeEntry }: { parent: string; timeEntry: CardTimeEntry }) => {
-      return await boardServiceClient.createCardTimeEntry({ parent, timeEntry: create(CardTimeEntrySchema, timeEntry as Record<string, unknown>) });
+    mutationFn: async ({ parent, timeEntry }: { parent: string; timeEntry: MsgInput }) => {
+      return await boardServiceClient.createCardTimeEntry({ parent, timeEntry: create(CardTimeEntrySchema, timeEntry) });
     },
     onSuccess: (_entry, variables) => {
       queryClient.invalidateQueries({ queryKey: boardKeys.timeEntries(variables.parent) });

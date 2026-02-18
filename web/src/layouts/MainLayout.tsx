@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { matchPath, Outlet, useLocation } from "react-router-dom";
+import MemoEditor from "@/components/MemoEditor";
 import type { MemoExplorerContext } from "@/components/MemoExplorer";
 import { MemoExplorer, MemoExplorerDrawer } from "@/components/MemoExplorer";
-import MemoEditor from "@/components/MemoEditor";
 import MobileHeader from "@/components/MobileHeader";
 import { userServiceClient } from "@/connect";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -10,8 +10,8 @@ import { useFilteredMemoStats } from "@/hooks/useFilteredMemoStats";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import useStandaloneMode from "@/hooks/useStandaloneMode";
 import { cn } from "@/lib/utils";
-import { useTranslate } from "@/utils/i18n";
 import { Routes } from "@/router";
+import { useTranslate } from "@/utils/i18n";
 
 const MainLayout = () => {
   const md = useMediaQuery("md");
@@ -95,13 +95,16 @@ const MainLayout = () => {
             <Outlet />
           </div>
         </div>
-
       </section>
 
       {showBottomEditor && (
         <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] left-0 right-0 z-[9999] px-4 transition-all duration-300 ease-in-out">
           <div className="w-full rounded-2xl border border-border bg-background/90 backdrop-blur-xl shadow-[0_-8px_30px_rgb(0,0,0,0.12)] px-4 pt-3 pb-3">
-            <MemoEditor className="!border-none !bg-transparent !shadow-none !px-0 !pt-0" cacheKey="pwa-bottom-editor" placeholder={t("editor.any-thoughts")} />
+            <MemoEditor
+              className="!border-none !bg-transparent !shadow-none !px-0 !pt-0"
+              cacheKey="pwa-bottom-editor"
+              placeholder={t("editor.any-thoughts")}
+            />
             <p className="mt-2 text-center text-[11px] leading-tight text-muted-foreground/70">
               Focus, Attention, Awareness, Imagination and Visalization.
             </p>

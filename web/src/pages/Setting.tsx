@@ -12,8 +12,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import MobileHeader from "@/components/MobileHeader";
-import InstanceSection from "@/components/Settings/InstanceSection";
 import BoardDefaultsSection from "@/components/Settings/BoardDefaultsSection";
+import InstanceSection from "@/components/Settings/InstanceSection";
 import MemberSection from "@/components/Settings/MemberSection";
 import MemoRelatedSettings from "@/components/Settings/MemoRelatedSettings";
 import MyAccountSection from "@/components/Settings/MyAccountSection";

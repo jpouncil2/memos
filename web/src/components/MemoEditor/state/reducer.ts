@@ -71,9 +71,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case "UPDATE_LOCAL_FILE":
       return {
         ...state,
-        localFiles: state.localFiles.map((f) =>
-          f.previewUrl === action.payload.previewUrl ? { ...f, ...action.payload.patch } : f,
-        ),
+        localFiles: state.localFiles.map((f) => (f.previewUrl === action.payload.previewUrl ? { ...f, ...action.payload.patch } : f)),
       };
 
     case "REMOVE_LOCAL_FILE":

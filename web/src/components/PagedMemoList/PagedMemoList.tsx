@@ -7,19 +7,19 @@ import { Button } from "@/components/ui/button";
 import { userServiceClient } from "@/connect";
 import { useView } from "@/contexts/ViewContext";
 import { DEFAULT_LIST_MEMOS_PAGE_SIZE } from "@/helpers/consts";
+import { useMediaQuery, useStandaloneMode } from "@/hooks";
 import { memoKeys, useInfiniteMemos } from "@/hooks/useMemoQueries";
 import { userKeys } from "@/hooks/useUserQueries";
-import { useMediaQuery, useStandaloneMode } from "@/hooks";
 import { Routes } from "@/router";
 import { State } from "@/types/proto/api/v1/common_pb";
 import type { Memo } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
-import MobileTagFilters from "../MobileTagFilters";
 import Empty from "../Empty";
 import type { MemoRenderContext } from "../MasonryView";
 import MasonryView from "../MasonryView";
 import MemoEditor from "../MemoEditor";
 import MemoFilters from "../MemoFilters";
+import MobileTagFilters from "../MobileTagFilters";
 import Skeleton from "../Skeleton";
 
 interface Props {

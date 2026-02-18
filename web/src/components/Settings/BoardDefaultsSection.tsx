@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useBoardCardDefaults } from "@/hooks/useBoardCardDefaults";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useBoardCardDefaults } from "@/hooks/useBoardCardDefaults";
 import SettingGroup from "./SettingGroup";
 import SettingRow from "./SettingRow";
 import SettingSection from "./SettingSection";
@@ -38,11 +38,7 @@ const BoardDefaultsSection = () => {
       description="Control the default options used in kanban card dropdowns. Statuses act as a fallback when a board has no columns."
     >
       <SettingGroup title="Card fields">
-        <SettingRow
-          label="Statuses"
-          description="One per line (or comma-separated)."
-          vertical
-        >
+        <SettingRow label="Statuses" description="One per line (or comma-separated)." vertical>
           <Textarea
             value={statusesInput}
             onChange={(event) => setStatusesInput(event.target.value)}

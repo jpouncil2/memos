@@ -106,14 +106,8 @@ const AttachmentItemCard: FC<{
 
       {isUploading && (
         <div className="w-full h-1.5 rounded-full bg-muted/50 overflow-hidden relative">
-          <div
-            className="absolute inset-y-0 left-0 bg-primary transition-all duration-300 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-          <div
-            className="absolute inset-x-0 bottom-0 top-0 bg-primary/20 animate-pulse"
-            style={{ width: `${progress}%` }}
-          />
+          <div className="absolute inset-y-0 left-0 bg-primary transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
+          <div className="absolute inset-x-0 bottom-0 top-0 bg-primary/20 animate-pulse" style={{ width: `${progress}%` }} />
         </div>
       )}
     </div>

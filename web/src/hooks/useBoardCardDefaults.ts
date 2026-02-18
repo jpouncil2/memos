@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { BOARD_DEFAULTS_EVENT, loadBoardCardDefaults, saveBoardCardDefaults } from "@/utils/boardDefaults";
 import type { BoardCardDefaults } from "@/utils/boardDefaults";
+import { BOARD_DEFAULTS_EVENT, loadBoardCardDefaults, saveBoardCardDefaults } from "@/utils/boardDefaults";
 
 export const useBoardCardDefaults = () => {
   const [defaults, setDefaults] = useState<BoardCardDefaults>(loadBoardCardDefaults());

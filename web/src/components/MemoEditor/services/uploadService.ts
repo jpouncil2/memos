@@ -1,15 +1,12 @@
-import { create, toBinary, fromBinary } from "@bufbuild/protobuf";
+import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
+import { getAccessToken } from "@/auth-state";
 import { attachmentServiceClient } from "@/connect";
 import type { Attachment } from "@/types/proto/api/v1/attachment_service_pb";
-import { CreateAttachmentRequestSchema, AttachmentSchema } from "@/types/proto/api/v1/attachment_service_pb";
-import { getAccessToken } from "@/auth-state";
+import { AttachmentSchema, CreateAttachmentRequestSchema } from "@/types/proto/api/v1/attachment_service_pb";
 import type { LocalFile } from "../types/attachment";
 
 export const uploadService = {
-  async uploadFileWithProgress(
-    localFile: LocalFile,
-    onProgress: (progress: number) => void
-  ): Promise<Attachment> {
+  async uploadFileWithProgress(localFile: LocalFile, onProgress: (progress: number) => void): Promise<Attachment> {
     const { file } = localFile;
     const url = `${window.location.origin}/memos.api.v1.AttachmentService/CreateAttachment`;
     const token = getAccessToken();
@@ -58,7 +55,7 @@ export const uploadService = {
 
             const attachment = fromBinary(AttachmentSchema, messageData);
             resolve(attachment);
-          } catch (e) {
+          } catch (_e) {
             reject(new Error("Failed to parse response"));
           }
         } else {

@@ -5,7 +5,7 @@ COPY web/package.json web/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY web/ .
 COPY proto/ /proto
-ARG NODE_OPTIONS="--max-old-space-size=3072"
+ARG NODE_OPTIONS="--max-old-space-size=1536"
 ENV NODE_OPTIONS=$NODE_OPTIONS
 RUN pnpm release
 

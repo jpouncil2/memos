@@ -43,7 +43,7 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoNa
             </div>
             <div className="pl-11 pr-2 pt-1 min-h-[56px]">{children}</div>
           </div>
-          <div className="px-3 pb-2 text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+          <div className="px-3 pb-2 text-[10px] leading-none tracking-tight text-muted-foreground whitespace-nowrap">
             Focus, Attention, Awareness, Imagination and Visualization.
           </div>
         </div>

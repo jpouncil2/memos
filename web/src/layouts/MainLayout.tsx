@@ -105,9 +105,6 @@ const MainLayout = () => {
               cacheKey="pwa-bottom-editor"
               placeholder={t("editor.any-thoughts")}
             />
-            <p className="mt-2 text-center text-[11px] leading-tight text-muted-foreground/70">
-              Focus, Attention, Awareness, Imagination and Visalization.
-            </p>
           </div>
         </div>
       )}

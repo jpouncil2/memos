@@ -169,6 +169,8 @@ func (s *APIV1Service) UpdateBoard(ctx context.Context, request *v1pb.UpdateBoar
 		case "update_time":
 			updatedTs := time.Now().Unix()
 			update.UpdatedTs = &updatedTs
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "invalid update path: %s", path)
 		}
 	}
 	if update.UpdatedTs == nil {
@@ -358,6 +360,8 @@ func (s *APIV1Service) UpdateBoardColumn(ctx context.Context, request *v1pb.Upda
 		case "update_time":
 			updatedTs := time.Now().Unix()
 			update.UpdatedTs = &updatedTs
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "invalid update path: %s", path)
 		}
 	}
 	if update.UpdatedTs == nil {
@@ -689,6 +693,8 @@ func (s *APIV1Service) UpdateCard(ctx context.Context, request *v1pb.UpdateCardR
 			updateMemoLink = &request.Card.Memo
 		case "parent":
 			updateParent = &request.Card.Parent
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "invalid update path: %s", path)
 		}
 	}
 

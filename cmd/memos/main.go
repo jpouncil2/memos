@@ -177,11 +177,11 @@ func main() {
 func retryMigrate(ctx context.Context, storeInstance *store.Store, attempts int, delay time.Duration) error {
 	var lastErr error
 	for i := 1; i <= attempts; i++ {
-		if err := storeInstance.Migrate(ctx); err == nil {
+		err := storeInstance.Migrate(ctx)
+		if err == nil {
 			return nil
-		} else {
-			lastErr = err
 		}
+		lastErr = err
 
 		if i == attempts {
 			break

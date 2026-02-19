@@ -7,26 +7,26 @@ import (
 )
 
 type Card struct {
-	ID         int32
-	UID        string
-	CreatorID  int32
-	CreatedTs  int64
-	UpdatedTs  int64
-	Title      string
+	ID          int32
+	UID         string
+	CreatorID   int32
+	CreatedTs   int64
+	UpdatedTs   int64
+	Title       string
 	Description string
-	Status     string
-	Type       string
-	AssigneeID *int32
-	Priority   string
-	Size       string
-	DueTs      *int64
-	Payload    *storepb.CardPayload
+	Status      string
+	Type        string
+	AssigneeID  *int32
+	Priority    string
+	Size        string
+	DueTs       *int64
+	Payload     *storepb.CardPayload
 }
 
 type FindCard struct {
-	ID        *int32
-	UID       *string
-	CreatorID *int32
+	ID         *int32
+	UID        *string
+	CreatorID  *int32
 	AssigneeID *int32
 
 	Limit  *int
@@ -34,17 +34,17 @@ type FindCard struct {
 }
 
 type UpdateCard struct {
-	ID         int32
-	Title      *string
+	ID          int32
+	Title       *string
 	Description *string
-	Status     *string
-	Type       *string
-	AssigneeID *int32
-	Priority   *string
-	Size       *string
-	DueTs      *int64
-	Payload    *storepb.CardPayload
-	UpdatedTs  *int64
+	Status      *string
+	Type        *string
+	AssigneeID  *int32
+	Priority    *string
+	Size        *string
+	DueTs       *int64
+	Payload     *storepb.CardPayload
+	UpdatedTs   *int64
 }
 
 type DeleteCard struct {

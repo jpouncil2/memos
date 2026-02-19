@@ -57,7 +57,16 @@ const SignUp = () => {
         password,
         role: User_Role.USER,
       });
-      await userServiceClient.createUser({ user });
+      try {
+        await userServiceClient.createUser({ user });
+      } catch (error: unknown) {
+        // If the account was just created by a duplicate submission/race, continue with sign-in.
+        const message = error instanceof Error ? error.message : String(error);
+        const duplicateUsername = message.includes('duplicate key value violates unique constraint "user_username_key"');
+        if (!duplicateUsername) {
+          throw error;
+        }
+      }
       const response = await authServiceClient.signIn({
         credentials: {
           case: "passwordCredentials",

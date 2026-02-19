@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebounce } from "react-use";
 import { useReverseGeocoding } from "@/components/map";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useExecuteAIInstruction } from "@/hooks/useAI";
 import type { MemoRelation } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
@@ -155,13 +155,13 @@ const InsertMenu = (props: InsertMenuProps) => {
 
   return (
     <>
-      <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
-        <DropdownMenuTrigger asChild>
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg border bg-background shadow-none" disabled={isUploading}>
             {isUploading ? <LoaderIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" sideOffset={10} className="w-[min(22rem,calc(100vw-2rem))] rounded-3xl p-4">
+        </SheetTrigger>
+        <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-6 pt-3">
           <div className="grid grid-cols-3 gap-3">
             {menuItems.map((item) => (
               <button
@@ -282,8 +282,8 @@ const InsertMenu = (props: InsertMenuProps) => {
             </button>
           </div>
           <div className="px-2 pt-2 text-sm text-muted-foreground">Type `/` for commands</div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </SheetContent>
+      </Sheet>
 
       {/* Hidden file input */}
       <input

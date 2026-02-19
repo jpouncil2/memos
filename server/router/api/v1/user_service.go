@@ -1367,7 +1367,7 @@ func (s *APIV1Service) CreateUserNotification(ctx context.Context, request *v1pb
 
 	// For now, allow any authenticated user to send a system notification to themselves.
 	// In a real system, this might be restricted to certain roles or the system itself.
-	if currentUser.ID != receiverID && currentUser.Role != store.RoleAdmin && currentUser.Role != store.RoleHost {
+	if currentUser.ID != receiverID && currentUser.Role != store.RoleAdmin {
 		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
 	}
 

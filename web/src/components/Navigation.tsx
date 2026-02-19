@@ -46,6 +46,12 @@ const Navigation = (props: Props) => {
     title: t("common.attachments"),
     icon: <PaperclipIcon className="w-6 h-auto shrink-0" />,
   };
+  const libraryNavLink: NavLinkItem = {
+    id: "header-library",
+    path: Routes.LIBRARY,
+    title: t("common.library"),
+    icon: <LibraryIcon className="w-6 h-auto shrink-0" />,
+  };
   const boardsNavLink: NavLinkItem = {
     id: "header-boards",
     path: Routes.BOARDS,
@@ -82,7 +88,7 @@ const Navigation = (props: Props) => {
   };
 
   const navLinks: NavLinkItem[] = currentUser
-    ? [homeNavLink, exploreNavLink, attachmentsNavLink, boardsNavLink, agentsNavLink, inboxNavLink]
+    ? [homeNavLink, exploreNavLink, libraryNavLink, attachmentsNavLink, boardsNavLink, agentsNavLink, inboxNavLink]
     : [exploreNavLink, signInNavLink];
 
   return (

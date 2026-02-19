@@ -16,6 +16,7 @@ const PermissionDenied = lazy(() => import("@/pages/PermissionDenied"));
 const Attachments = lazy(() => import("@/pages/Attachments"));
 const Board = lazy(() => import("@/pages/Board"));
 const Agents = lazy(() => import("@/pages/Agents"));
+const Library = lazy(() => import("@/pages/Library"));
 const Setting = lazy(() => import("@/pages/Setting"));
 const SignIn = lazy(() => import("@/pages/SignIn"));
 const SignUp = lazy(() => import("@/pages/SignUp"));
@@ -55,6 +56,7 @@ const router = createBrowserRouter([
             ],
           },
           { path: Routes.ATTACHMENTS, element: <Attachments /> },
+          { path: Routes.LIBRARY, element: <Library /> },
           { path: Routes.BOARDS, element: <Board /> },
           { path: Routes.AGENTS, element: <Agents /> },
           { path: Routes.INBOX, element: <Inboxes /> },

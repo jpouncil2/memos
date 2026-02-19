@@ -157,7 +157,7 @@ const InsertMenu = (props: InsertMenuProps) => {
     <>
       <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="shadow-none" disabled={isUploading}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg border bg-background shadow-none" disabled={isUploading}>
             {isUploading ? <LoaderIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
           </Button>
         </DropdownMenuTrigger>
@@ -222,6 +222,24 @@ const InsertMenu = (props: InsertMenuProps) => {
             </button>
             <button
               type="button"
+              onClick={() =>
+                void handleAIAction(
+                  "Summarize this memo in 1-3 sentences, then extract key items as a clean bulleted list. Format:\nSummary: ...\n\nBullets:\n- item",
+                )
+              }
+              className="w-full rounded-xl px-2 py-2 text-left hover:bg-accent"
+              disabled={executeAI.isPending}
+            >
+              <div className="flex items-start gap-3">
+                <SparklesIcon className="mt-1 h-4 w-4 text-amber-500" />
+                <div>
+                  <div className="text-lg font-semibold">Summary + bullet list</div>
+                  <div className="text-sm text-muted-foreground">Apply to the current memo</div>
+                </div>
+              </div>
+            </button>
+            <button
+              type="button"
               onClick={() => void handleAIAction("Make this note more concise.")}
               className="w-full rounded-xl px-2 py-2 text-left hover:bg-accent"
               disabled={executeAI.isPending}
@@ -234,7 +252,36 @@ const InsertMenu = (props: InsertMenuProps) => {
                 </div>
               </div>
             </button>
+            <button
+              type="button"
+              onClick={() => void handleAIAction("Extend this note with more relevant details.")}
+              className="w-full rounded-xl px-2 py-2 text-left hover:bg-accent"
+              disabled={executeAI.isPending}
+            >
+              <div className="flex items-start gap-3">
+                <SparklesIcon className="mt-1 h-4 w-4 text-amber-500" />
+                <div>
+                  <div className="text-lg font-semibold">Expand</div>
+                  <div className="text-sm text-muted-foreground">Apply to the current memo</div>
+                </div>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleAIAction("Translate this note to English.")}
+              className="w-full rounded-xl px-2 py-2 text-left hover:bg-accent"
+              disabled={executeAI.isPending}
+            >
+              <div className="flex items-start gap-3">
+                <SparklesIcon className="mt-1 h-4 w-4 text-amber-500" />
+                <div>
+                  <div className="text-lg font-semibold">Translate to English</div>
+                  <div className="text-sm text-muted-foreground">Apply to the current memo</div>
+                </div>
+              </div>
+            </button>
           </div>
+          <div className="px-2 pt-2 text-sm text-muted-foreground">Type `/` for commands</div>
         </DropdownMenuContent>
       </DropdownMenu>
 

@@ -132,7 +132,8 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
       */}
       <div
         className={cn(
-          "group relative w-full flex flex-col justify-between items-start bg-card px-3 py-2 rounded-lg border border-border gap-1.5",
+          "group relative w-full flex flex-col justify-between items-start gap-1.5",
+          state.ui.isFocusMode ? "bg-card px-3 py-2 rounded-lg border border-border" : "bg-transparent px-0 py-0 border-0 rounded-none",
           FOCUS_MODE_STYLES.transition,
           state.ui.isFocusMode && cn(FOCUS_MODE_STYLES.container.base, FOCUS_MODE_STYLES.container.spacing),
           className,

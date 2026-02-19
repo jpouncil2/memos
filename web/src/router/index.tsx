@@ -14,6 +14,7 @@ const MemoDetail = lazy(() => import("@/pages/MemoDetail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const PermissionDenied = lazy(() => import("@/pages/PermissionDenied"));
 const Attachments = lazy(() => import("@/pages/Attachments"));
+const Board = lazy(() => import("@/pages/Board"));
 const Agents = lazy(() => import("@/pages/Agents"));
 const Setting = lazy(() => import("@/pages/Setting"));
 const SignIn = lazy(() => import("@/pages/SignIn"));
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
             ],
           },
           { path: Routes.ATTACHMENTS, element: <Attachments /> },
+          { path: Routes.BOARDS, element: <Board /> },
           { path: Routes.AGENTS, element: <Agents /> },
           { path: Routes.INBOX, element: <Inboxes /> },
           { path: Routes.SETTING, element: <Setting /> },

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -50,7 +51,7 @@ var (
 			}
 
 			storeInstance := store.New(dbDriver, instanceProfile)
-			if err := storeInstance.Migrate(ctx); err != nil {
+			if err := retryMigrate(ctx, storeInstance, 8, 5*time.Second); err != nil {
 				cancel()
 				slog.Error("failed to migrate", "error", err)
 				return
@@ -171,4 +172,27 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func retryMigrate(ctx context.Context, storeInstance *store.Store, attempts int, delay time.Duration) error {
+	var lastErr error
+	for i := 1; i <= attempts; i++ {
+		err := storeInstance.Migrate(ctx)
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+
+		if i == attempts {
+			break
+		}
+		slog.Warn("migration attempt failed; retrying", "attempt", i, "maxAttempts", attempts, "delay", delay.String(), "error", lastErr)
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(delay):
+		}
+	}
+	return lastErr
 }

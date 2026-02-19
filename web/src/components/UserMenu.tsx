@@ -92,7 +92,14 @@ const UserMenu = (props: Props) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={!currentUser}>
-        <div className={cn("w-auto flex flex-row justify-start items-center cursor-pointer text-foreground", collapsed ? "px-1" : "px-3")}>
+        <button
+          type="button"
+          className={cn(
+            "w-auto flex flex-row justify-start items-center cursor-pointer text-foreground bg-transparent border-0",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+            collapsed ? "px-1" : "px-3",
+          )}
+        >
           {currentUser?.avatarUrl ? (
             <UserAvatar className="shrink-0" avatarUrl={currentUser?.avatarUrl} />
           ) : (
@@ -103,7 +110,7 @@ const UserMenu = (props: Props) => {
               {currentUser?.displayName || currentUser?.username}
             </span>
           )}
-        </div>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem onClick={() => navigateTo(`/u/${encodeURIComponent(currentUser?.username ?? "")}`)}>

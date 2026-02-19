@@ -39,6 +39,7 @@ const (
 	UserService_DeleteUserWebhook_FullMethodName         = "/memos.api.v1.UserService/DeleteUserWebhook"
 	UserService_ListUserNotifications_FullMethodName     = "/memos.api.v1.UserService/ListUserNotifications"
 	UserService_UpdateUserNotification_FullMethodName    = "/memos.api.v1.UserService/UpdateUserNotification"
+	UserService_CreateUserNotification_FullMethodName    = "/memos.api.v1.UserService/CreateUserNotification"
 	UserService_DeleteUserNotification_FullMethodName    = "/memos.api.v1.UserService/DeleteUserNotification"
 )
 
@@ -89,6 +90,8 @@ type UserServiceClient interface {
 	ListUserNotifications(ctx context.Context, in *ListUserNotificationsRequest, opts ...grpc.CallOption) (*ListUserNotificationsResponse, error)
 	// UpdateUserNotification updates a notification.
 	UpdateUserNotification(ctx context.Context, in *UpdateUserNotificationRequest, opts ...grpc.CallOption) (*UserNotification, error)
+	// CreateUserNotification creates a notification for a user.
+	CreateUserNotification(ctx context.Context, in *CreateUserNotificationRequest, opts ...grpc.CallOption) (*UserNotification, error)
 	// DeleteUserNotification deletes a notification.
 	DeleteUserNotification(ctx context.Context, in *DeleteUserNotificationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -291,6 +294,16 @@ func (c *userServiceClient) UpdateUserNotification(ctx context.Context, in *Upda
 	return out, nil
 }
 
+func (c *userServiceClient) CreateUserNotification(ctx context.Context, in *CreateUserNotificationRequest, opts ...grpc.CallOption) (*UserNotification, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserNotification)
+	err := c.cc.Invoke(ctx, UserService_CreateUserNotification_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) DeleteUserNotification(ctx context.Context, in *DeleteUserNotificationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
@@ -348,6 +361,8 @@ type UserServiceServer interface {
 	ListUserNotifications(context.Context, *ListUserNotificationsRequest) (*ListUserNotificationsResponse, error)
 	// UpdateUserNotification updates a notification.
 	UpdateUserNotification(context.Context, *UpdateUserNotificationRequest) (*UserNotification, error)
+	// CreateUserNotification creates a notification for a user.
+	CreateUserNotification(context.Context, *CreateUserNotificationRequest) (*UserNotification, error)
 	// DeleteUserNotification deletes a notification.
 	DeleteUserNotification(context.Context, *DeleteUserNotificationRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedUserServiceServer()
@@ -416,6 +431,9 @@ func (UnimplementedUserServiceServer) ListUserNotifications(context.Context, *Li
 }
 func (UnimplementedUserServiceServer) UpdateUserNotification(context.Context, *UpdateUserNotificationRequest) (*UserNotification, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateUserNotification not implemented")
+}
+func (UnimplementedUserServiceServer) CreateUserNotification(context.Context, *CreateUserNotificationRequest) (*UserNotification, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateUserNotification not implemented")
 }
 func (UnimplementedUserServiceServer) DeleteUserNotification(context.Context, *DeleteUserNotificationRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteUserNotification not implemented")
@@ -783,6 +801,24 @@ func _UserService_UpdateUserNotification_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_CreateUserNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).CreateUserNotification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_CreateUserNotification_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).CreateUserNotification(ctx, req.(*CreateUserNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_DeleteUserNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteUserNotificationRequest)
 	if err := dec(in); err != nil {
@@ -883,6 +919,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUserNotification",
 			Handler:    _UserService_UpdateUserNotification_Handler,
+		},
+		{
+			MethodName: "CreateUserNotification",
+			Handler:    _UserService_CreateUserNotification_Handler,
 		},
 		{
 			MethodName: "DeleteUserNotification",

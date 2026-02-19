@@ -1347,6 +1347,56 @@ func (s *APIV1Service) UpdateUserNotification(ctx context.Context, request *v1pb
 	return notification, nil
 }
 
+func (s *APIV1Service) CreateUserNotification(ctx context.Context, request *v1pb.CreateUserNotificationRequest) (*v1pb.UserNotification, error) {
+	parentParts := strings.Split(request.Parent, "/")
+	if len(parentParts) != 2 || parentParts[0] != "users" {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid parent name: %s", request.Parent)
+	}
+	receiverID, err := util.ConvertStringToInt32(parentParts[1])
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid receiver ID: %v", err)
+	}
+
+	currentUser, err := s.fetchCurrentUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+	}
+	if currentUser == nil {
+		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated")
+	}
+
+	// For now, allow any authenticated user to send a system notification to themselves.
+	// In a real system, this might be restricted to certain roles or the system itself.
+	if currentUser.ID != receiverID && currentUser.Role != store.RoleAdmin {
+		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+	}
+
+	inboxMessage := &storepb.InboxMessage{
+		Type: storepb.InboxMessage_TYPE_UNSPECIFIED,
+	}
+
+	if request.Notification.Type == v1pb.UserNotification_SYSTEM {
+		inboxMessage.Type = storepb.InboxMessage_TYPE_UNSPECIFIED // We use TYPE_UNSPECIFIED for custom system messages for now or could add a new storepb type.
+		// Actually, let's keep it simple and just use the type provided if it's SYSTEM.
+	}
+
+	// Create the inbox item in storage.
+	inbox, err := s.Store.CreateInbox(ctx, &store.Inbox{
+		SenderID:   currentUser.ID, // Or a system user ID
+		ReceiverID: receiverID,
+		Status:     store.UNREAD,
+		Message: &storepb.InboxMessage{
+			Type:       storepb.InboxMessage_TYPE_UNSPECIFIED,
+			ActivityId: request.Notification.ActivityId,
+		},
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create inbox: %v", err)
+	}
+
+	return s.convertInboxToUserNotification(ctx, inbox)
+}
+
 // DeleteUserNotification permanently deletes a notification.
 // Only the notification owner can delete their notifications.
 func (s *APIV1Service) DeleteUserNotification(ctx context.Context, request *v1pb.DeleteUserNotificationRequest) (*emptypb.Empty, error) {
@@ -1412,7 +1462,9 @@ func (*APIV1Service) convertInboxToUserNotification(_ context.Context, inbox *st
 		case storepb.InboxMessage_MEMO_COMMENT:
 			notification.Type = v1pb.UserNotification_MEMO_COMMENT
 		default:
-			notification.Type = v1pb.UserNotification_TYPE_UNSPECIFIED
+			// If it's not a comment, and we set it up to be TYPE_UNSPECIFIED in the store for system messages,
+			// mark it as SYSTEM in the API.
+			notification.Type = v1pb.UserNotification_SYSTEM
 		}
 
 		if inbox.Message.ActivityId != nil {

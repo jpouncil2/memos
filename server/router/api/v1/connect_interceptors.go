@@ -54,6 +54,9 @@ func (*MetadataInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc 
 
 		// Execute the request
 		resp, err := next(ctx, req)
+		if err != nil {
+			return resp, err
+		}
 
 		// Prevent browser caching of API responses to avoid stale data issues
 		// See: https://github.com/usememos/memos/issues/5470

@@ -39,6 +39,7 @@ export type EditorAction =
   | { type: "ADD_RELATION"; payload: MemoRelation }
   | { type: "REMOVE_RELATION"; payload: string }
   | { type: "ADD_LOCAL_FILE"; payload: LocalFile }
+  | { type: "UPDATE_LOCAL_FILE"; payload: { previewUrl: string; patch: Partial<LocalFile> } }
   | { type: "REMOVE_LOCAL_FILE"; payload: string }
   | { type: "CLEAR_LOCAL_FILES" }
   | { type: "TOGGLE_FOCUS_MODE" }

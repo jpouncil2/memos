@@ -57,7 +57,16 @@ const SignUp = () => {
         password,
         role: User_Role.USER,
       });
-      await userServiceClient.createUser({ user });
+      try {
+        await userServiceClient.createUser({ user });
+      } catch (error: unknown) {
+        // If the account was just created by a duplicate submission/race, continue with sign-in.
+        const message = error instanceof Error ? error.message : String(error);
+        const duplicateUsername = message.includes('duplicate key value violates unique constraint "user_username_key"');
+        if (!duplicateUsername) {
+          throw error;
+        }
+      }
       const response = await authServiceClient.signIn({
         credentials: {
           case: "passwordCredentials",
@@ -125,7 +134,7 @@ const SignUp = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-end items-center w-full mt-6">
-                <Button type="submit" className="w-full h-10" disabled={actionBtnLoadingState.isLoading} onClick={handleSignUpButtonClick}>
+                <Button type="submit" className="w-full h-10" disabled={actionBtnLoadingState.isLoading}>
                   {t("common.sign-up")}
                   {actionBtnLoadingState.isLoading && <LoaderIcon className="w-5 h-auto ml-2 animate-spin opacity-60" />}
                 </Button>

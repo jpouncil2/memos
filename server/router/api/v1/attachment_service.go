@@ -161,6 +161,20 @@ func (s *APIV1Service) CreateAttachment(ctx context.Context, request *v1pb.Creat
 		}
 		create.MemoID = &memo.ID
 	}
+	if request.Attachment.Card != nil {
+		cardUID, err := ExtractCardUIDFromName(*request.Attachment.Card)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid card name: %v", err)
+		}
+		card, err := s.Store.GetCard(ctx, &store.FindCard{UID: &cardUID})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to find card: %v", err)
+		}
+		if card == nil {
+			return nil, status.Errorf(codes.NotFound, "card not found: %s", *request.Attachment.Card)
+		}
+		create.CardID = &card.ID
+	}
 	attachment, err := s.Store.CreateAttachment(ctx, create)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create attachment: %v", err)
@@ -346,6 +360,10 @@ func convertAttachmentFromStore(attachment *store.Attachment) *v1pb.Attachment {
 	if attachment.MemoUID != nil && *attachment.MemoUID != "" {
 		memoName := fmt.Sprintf("%s%s", MemoNamePrefix, *attachment.MemoUID)
 		attachmentMessage.Memo = &memoName
+	}
+	if attachment.CardUID != nil && *attachment.CardUID != "" {
+		cardName := fmt.Sprintf("%s%s", CardNamePrefix, *attachment.CardUID)
+		attachmentMessage.Card = &cardName
 	}
 	if attachment.StorageType == storepb.AttachmentStorageType_EXTERNAL || attachment.StorageType == storepb.AttachmentStorageType_S3 {
 		attachmentMessage.ExternalLink = attachment.Reference

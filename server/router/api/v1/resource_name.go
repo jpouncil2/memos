@@ -19,6 +19,9 @@ const (
 	IdentityProviderNamePrefix = "identity-providers/"
 	ActivityNamePrefix         = "activities/"
 	WebhookNamePrefix          = "webhooks/"
+	BoardNamePrefix            = "boards/"
+	BoardColumnNamePrefix      = "columns/"
+	CardNamePrefix             = "cards/"
 )
 
 // GetNameParentTokens returns the tokens from a resource name.
@@ -93,6 +96,46 @@ func ExtractMemoUIDFromName(name string) (string, error) {
 	}
 	id := tokens[0]
 	return id, nil
+}
+
+// ExtractBoardUIDFromName returns the board UID from a resource name.
+// e.g., "boards/uuid" -> "uuid".
+func ExtractBoardUIDFromName(name string) (string, error) {
+	tokens, err := GetNameParentTokens(name, BoardNamePrefix)
+	if err != nil {
+		return "", err
+	}
+	return tokens[0], nil
+}
+
+// ExtractBoardColumnUIDFromName returns the board UID and column UID from a resource name.
+// e.g., "boards/board/columns/column" -> ("board", "column").
+func ExtractBoardColumnUIDFromName(name string) (string, string, error) {
+	tokens, err := GetNameParentTokens(name, BoardNamePrefix, BoardColumnNamePrefix)
+	if err != nil {
+		return "", "", err
+	}
+	return tokens[0], tokens[1], nil
+}
+
+// ExtractCardUIDFromName returns the card UID from a resource name.
+// e.g., "cards/uuid" -> "uuid".
+func ExtractCardUIDFromName(name string) (string, error) {
+	tokens, err := GetNameParentTokens(name, CardNamePrefix)
+	if err != nil {
+		return "", err
+	}
+	return tokens[0], nil
+}
+
+// ExtractCardPlacementTokens returns board UID, column UID, and card UID.
+// e.g., "boards/b/columns/c/cards/k" -> ("b", "c", "k").
+func ExtractCardPlacementTokens(name string) (string, string, string, error) {
+	tokens, err := GetNameParentTokens(name, BoardNamePrefix, BoardColumnNamePrefix, CardNamePrefix)
+	if err != nil {
+		return "", "", "", err
+	}
+	return tokens[0], tokens[1], tokens[2], nil
 }
 
 // ExtractAttachmentUIDFromName returns the attachment UID from a resource name.

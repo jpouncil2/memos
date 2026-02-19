@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package memos.api.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+
+option go_package = "gen/api/v1";
+
+service AIService {
+  // ExecuteAIInstruction executes an AI instruction on a memo or free-form text.
+  rpc ExecuteAIInstruction(ExecuteAIInstructionRequest) returns (ExecuteAIInstructionResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/execute"
+      body: "*"
+    };
+  }
+}
+
+message ExecuteAIInstructionRequest {
+  // Required. The instruction to send to the AI.
+  string instruction = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. The context or source text to operate on.
+  optional string content = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ExecuteAIInstructionResponse {
+  // The result of the AI instruction execution.
+  string content = 1;
+}

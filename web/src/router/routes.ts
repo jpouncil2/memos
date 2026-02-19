@@ -1,9 +1,11 @@
 export const ROUTES = {
   ROOT: "/",
+  LIBRARY: "/library",
   ATTACHMENTS: "/attachments",
   AGENTS: "/agents",
   INBOX: "/inbox",
   ARCHIVED: "/archived",
+  BOARDS: "/boards",
   SETTING: "/setting",
   EXPLORE: "/explore",
   AUTH: "/auth",

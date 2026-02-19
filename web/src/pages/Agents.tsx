@@ -45,7 +45,10 @@ const Agents = () => {
   }, []);
 
   const timezones = useMemo(() => {
-    if (typeof Intl !== "undefined" && typeof (Intl as typeof Intl & { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf === "function") {
+    if (
+      typeof Intl !== "undefined" &&
+      typeof (Intl as typeof Intl & { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf === "function"
+    ) {
       return (Intl as typeof Intl & { supportedValuesOf: (key: string) => string[] }).supportedValuesOf("timeZone");
     }
     return [defaultTimezone, "UTC"];
@@ -65,9 +68,7 @@ const Agents = () => {
     setIsRunning(true);
     setResult(null);
 
-    const payload = isCustom
-      ? { startDate, endDate, timezone, title: "Summary of Memos" }
-      : { range, timezone, title: "Summary of Memos" };
+    const payload = isCustom ? { startDate, endDate, timezone, title: "Summary of Memos" } : { range, timezone, title: "Summary of Memos" };
 
     try {
       const headers: Record<string, string> = {
@@ -129,9 +130,7 @@ const Agents = () => {
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold">Summary of Memos</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Generate a digest for a selected date range and save it as a memo.
-                  </p>
+                  <p className="text-sm text-muted-foreground">Generate a digest for a selected date range and save it as a memo.</p>
                 </div>
                 <Button onClick={handleRun} disabled={!canRun || isRunning} className="md:mt-1">
                   {isRunning ? "Running..." : "Run summary"}
@@ -186,9 +185,7 @@ const Agents = () => {
               )}
 
               <div className="mt-4 border-t border-border pt-4">
-                {!result && (
-                  <p className="text-sm text-muted-foreground">Run the agent to generate a summary.</p>
-                )}
+                {!result && <p className="text-sm text-muted-foreground">Run the agent to generate a summary.</p>}
                 {result?.status === "ok" && (
                   <div className="space-y-3">
                     <div className="text-sm font-medium">Summary</div>
@@ -211,9 +208,7 @@ const Agents = () => {
                 {result?.status === "empty" && (
                   <p className="text-sm text-muted-foreground">{result.message || "No memos in this range."}</p>
                 )}
-                {result?.status === "error" && (
-                  <p className="text-sm text-destructive">{result.message || "Agent failed to run."}</p>
-                )}
+                {result?.status === "error" && <p className="text-sm text-destructive">{result.message || "Agent failed to run."}</p>}
               </div>
             </div>
           </div>

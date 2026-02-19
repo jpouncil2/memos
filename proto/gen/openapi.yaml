@@ -69,6 +69,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/execute:
+        post:
+            tags:
+                - AIService
+            description: ExecuteAIInstruction executes an AI instruction on a memo or free-form text.
+            operationId: AIService_ExecuteAIInstruction
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ExecuteAIInstructionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ExecuteAIInstructionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/attachments:
         get:
             tags:
@@ -325,6 +350,865 @@ paths:
                 SignOut terminates the user's authentication.
                  Revokes the refresh token and clears the authentication cookie.
             operationId: AuthService_SignOut
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/boards:
+        get:
+            tags:
+                - BoardService
+            description: Board CRUD
+            operationId: BoardService_ListBoards
+            parameters:
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  schema:
+                    type: string
+                - name: orderBy
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListBoardsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - BoardService
+            operationId: BoardService_CreateBoard
+            parameters:
+                - name: boardId
+                  in: query
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Board'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Board'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/boards/{board}:
+        get:
+            tags:
+                - BoardService
+            operationId: BoardService_GetBoard
+            parameters:
+                - name: board
+                  in: path
+                  description: The board id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Board'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        delete:
+            tags:
+                - BoardService
+            operationId: BoardService_DeleteBoard
+            parameters:
+                - name: board
+                  in: path
+                  description: The board id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - BoardService
+            operationId: BoardService_UpdateBoard
+            parameters:
+                - name: board
+                  in: path
+                  description: The board id.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Board'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Board'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/boards/{board}/columns:
+        get:
+            tags:
+                - BoardService
+            description: Columns
+            operationId: BoardService_ListBoardColumns
+            parameters:
+                - name: board
+                  in: path
+                  description: The board id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListBoardColumnsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - BoardService
+            operationId: BoardService_CreateBoardColumn
+            parameters:
+                - name: board
+                  in: path
+                  description: The board id.
+                  required: true
+                  schema:
+                    type: string
+                - name: columnId
+                  in: query
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/BoardColumn'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BoardColumn'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/boards/{board}/columns/{column}:
+        delete:
+            tags:
+                - BoardService
+            operationId: BoardService_DeleteBoardColumn
+            parameters:
+                - name: board
+                  in: path
+                  description: The board id.
+                  required: true
+                  schema:
+                    type: string
+                - name: column
+                  in: path
+                  description: The column id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - BoardService
+            operationId: BoardService_UpdateBoardColumn
+            parameters:
+                - name: board
+                  in: path
+                  description: The board id.
+                  required: true
+                  schema:
+                    type: string
+                - name: column
+                  in: path
+                  description: The column id.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/BoardColumn'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BoardColumn'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/boards/{board}/columns/{column}/cards/{card}:
+        delete:
+            tags:
+                - BoardService
+            operationId: BoardService_DeleteCardPlacement
+            parameters:
+                - name: board
+                  in: path
+                  description: The board id.
+                  required: true
+                  schema:
+                    type: string
+                - name: column
+                  in: path
+                  description: The column id.
+                  required: true
+                  schema:
+                    type: string
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cardPlacements:
+        get:
+            tags:
+                - BoardService
+            description: Card placement (global card on board/column)
+            operationId: BoardService_ListCardPlacements
+            parameters:
+                - name: board
+                  in: query
+                  schema:
+                    type: string
+                - name: card
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListCardPlacementsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - BoardService
+            operationId: BoardService_UpsertCardPlacement
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CardPlacement'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CardPlacement'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cards:
+        get:
+            tags:
+                - BoardService
+            description: Cards
+            operationId: BoardService_ListCards
+            parameters:
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  schema:
+                    type: string
+                - name: orderBy
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListCardsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - BoardService
+            operationId: BoardService_CreateCard
+            parameters:
+                - name: cardId
+                  in: query
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Card'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Card'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cards/{card}:
+        get:
+            tags:
+                - BoardService
+            operationId: BoardService_GetCard
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Card'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        delete:
+            tags:
+                - BoardService
+            operationId: BoardService_DeleteCard
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - BoardService
+            operationId: BoardService_UpdateCard
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Card'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Card'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cards/{card}/comments:
+        get:
+            tags:
+                - BoardService
+            description: Comments
+            operationId: BoardService_ListCardComments
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListCardCommentsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - BoardService
+            operationId: BoardService_CreateCardComment
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CardComment'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CardComment'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cards/{card}/relations:
+        get:
+            tags:
+                - BoardService
+            description: Card relations (parent/epic)
+            operationId: BoardService_ListCardRelations
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListCardRelationsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - BoardService
+            operationId: BoardService_UpsertCardRelation
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpsertCardRelationRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CardRelation'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cards/{card}/relations/{relation}:
+        delete:
+            tags:
+                - BoardService
+            operationId: BoardService_DeleteCardRelation
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+                - name: relation
+                  in: path
+                  description: The relation id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cards/{card}/subtasks:
+        get:
+            tags:
+                - BoardService
+            description: Subtasks
+            operationId: BoardService_ListCardSubtasks
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListCardSubtasksResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - BoardService
+            operationId: BoardService_CreateCardSubtask
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+                - name: subtaskId
+                  in: query
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CardSubtask'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CardSubtask'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cards/{card}/subtasks/{subtask}:
+        delete:
+            tags:
+                - BoardService
+            operationId: BoardService_DeleteCardSubtask
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+                - name: subtask
+                  in: path
+                  description: The subtask id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - BoardService
+            operationId: BoardService_UpdateCardSubtask
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+                - name: subtask
+                  in: path
+                  description: The subtask id.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CardSubtask'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CardSubtask'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cards/{card}/timeEntries:
+        get:
+            tags:
+                - BoardService
+            description: Time tracking
+            operationId: BoardService_ListCardTimeEntries
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListCardTimeEntriesResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - BoardService
+            operationId: BoardService_CreateCardTimeEntry
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CardTimeEntry'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CardTimeEntry'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/cards/{card}/timeEntries/{timeEntry}:
+        delete:
+            tags:
+                - BoardService
+            operationId: BoardService_DeleteCardTimeEntry
+            parameters:
+                - name: card
+                  in: path
+                  description: The card id.
+                  required: true
+                  schema:
+                    type: string
+                - name: timeEntry
+                  in: path
+                  description: The timeEntry id.
+                  required: true
+                  schema:
+                    type: string
             responses:
                 "200":
                     description: OK
@@ -1296,6 +2180,37 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - UserService
+            description: CreateUserNotification creates a notification for a user.
+            operationId: UserService_CreateUserNotification
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UserNotification'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserNotification'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/users/{user}/notifications/{notification}:
         delete:
             tags:
@@ -2030,6 +2945,218 @@ components:
                     description: |-
                         Optional. The related memo. Refer to `Memo.name`.
                          Format: memos/{memo}
+                card:
+                    type: string
+                    description: |-
+                        Optional. The related card. Refer to `Card.name`.
+                         Format: cards/{card}
+        Board:
+            required:
+                - title
+            type: object
+            properties:
+                name:
+                    type: string
+                creator:
+                    readOnly: true
+                    type: string
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                title:
+                    type: string
+                description:
+                    type: string
+        BoardColumn:
+            required:
+                - title
+                - order
+            type: object
+            properties:
+                name:
+                    type: string
+                board:
+                    readOnly: true
+                    type: string
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                title:
+                    type: string
+                order:
+                    type: integer
+                    format: int32
+        Card:
+            required:
+                - title
+            type: object
+            properties:
+                name:
+                    type: string
+                creator:
+                    readOnly: true
+                    type: string
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                title:
+                    type: string
+                description:
+                    type: string
+                status:
+                    type: string
+                type:
+                    type: string
+                assignee:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+                priority:
+                    type: string
+                dueTime:
+                    type: string
+                    format: date-time
+                size:
+                    type: string
+                memo:
+                    type: string
+                parent:
+                    type: string
+                attachments:
+                    readOnly: true
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Attachment'
+        CardComment:
+            required:
+                - content
+            type: object
+            properties:
+                name:
+                    type: string
+                card:
+                    readOnly: true
+                    type: string
+                creator:
+                    readOnly: true
+                    type: string
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                content:
+                    type: string
+        CardPlacement:
+            required:
+                - board
+                - column
+                - card
+                - order
+            type: object
+            properties:
+                board:
+                    type: string
+                column:
+                    type: string
+                card:
+                    type: string
+                order:
+                    type: integer
+                    format: int32
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+        CardRelation:
+            required:
+                - card
+                - relatedCard
+                - type
+            type: object
+            properties:
+                name:
+                    type: string
+                card:
+                    type: string
+                relatedCard:
+                    type: string
+                type:
+                    enum:
+                        - CARD_RELATION_TYPE_UNSPECIFIED
+                        - CARD_RELATION_PARENT
+                        - CARD_RELATION_EPIC
+                    type: string
+                    format: enum
+        CardSubtask:
+            required:
+                - title
+            type: object
+            properties:
+                name:
+                    type: string
+                card:
+                    readOnly: true
+                    type: string
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                title:
+                    type: string
+                done:
+                    type: boolean
+                order:
+                    type: integer
+                    format: int32
+        CardTimeEntry:
+            required:
+                - startTime
+                - endTime
+            type: object
+            properties:
+                name:
+                    type: string
+                card:
+                    readOnly: true
+                    type: string
+                creator:
+                    readOnly: true
+                    type: string
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                startTime:
+                    type: string
+                    format: date-time
+                endTime:
+                    type: string
+                    format: date-time
         CreatePersonalAccessTokenRequest:
             required:
                 - parent
@@ -2059,6 +3186,23 @@ components:
                     description: |-
                         The actual token value - only returned on creation.
                          This is the only time the token value will be visible.
+        ExecuteAIInstructionRequest:
+            required:
+                - instruction
+            type: object
+            properties:
+                instruction:
+                    type: string
+                    description: Required. The instruction to send to the AI.
+                content:
+                    type: string
+                    description: Optional. The context or source text to operate on.
+        ExecuteAIInstructionResponse:
+            type: object
+            properties:
+                content:
+                    type: string
+                    description: The result of the AI instruction execution.
         FieldMapping:
             type: object
             properties:
@@ -2281,6 +3425,72 @@ components:
                 totalSize:
                     type: integer
                     description: The total count of attachments (may be approximate).
+                    format: int32
+        ListBoardColumnsResponse:
+            type: object
+            properties:
+                columns:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/BoardColumn'
+        ListBoardsResponse:
+            type: object
+            properties:
+                boards:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Board'
+                nextPageToken:
+                    type: string
+                totalSize:
+                    type: integer
+                    format: int32
+        ListCardCommentsResponse:
+            type: object
+            properties:
+                comments:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/CardComment'
+        ListCardPlacementsResponse:
+            type: object
+            properties:
+                placements:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/CardPlacement'
+        ListCardRelationsResponse:
+            type: object
+            properties:
+                relations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/CardRelation'
+        ListCardSubtasksResponse:
+            type: object
+            properties:
+                subtasks:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/CardSubtask'
+        ListCardTimeEntriesResponse:
+            type: object
+            properties:
+                timeEntries:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/CardTimeEntry'
+        ListCardsResponse:
+            type: object
+            properties:
+                cards:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Card'
+                nextPageToken:
+                    type: string
+                totalSize:
+                    type: integer
                     format: int32
         ListIdentityProvidersResponse:
             type: object
@@ -2830,6 +4040,24 @@ components:
             description: |-
                 S3 configuration for cloud storage backend.
                  Reference: https://developers.cloudflare.com/r2/examples/aws/aws-sdk-go/
+        UpsertCardRelationRequest:
+            required:
+                - name
+                - relatedCard
+                - type
+            type: object
+            properties:
+                name:
+                    type: string
+                relatedCard:
+                    type: string
+                type:
+                    enum:
+                        - CARD_RELATION_TYPE_UNSPECIFIED
+                        - CARD_RELATION_PARENT
+                        - CARD_RELATION_EPIC
+                    type: string
+                    format: enum
         UpsertMemoReactionRequest:
             required:
                 - name
@@ -2935,6 +4163,7 @@ components:
                     enum:
                         - TYPE_UNSPECIFIED
                         - MEMO_COMMENT
+                        - SYSTEM
                     type: string
                     description: The type of the notification.
                     format: enum
@@ -3057,9 +4286,11 @@ components:
                     format: date-time
             description: UserWebhook represents a webhook owned by a user.
 tags:
+    - name: AIService
     - name: ActivityService
     - name: AttachmentService
     - name: AuthService
+    - name: BoardService
     - name: IdentityProviderService
     - name: InstanceService
     - name: MemoService

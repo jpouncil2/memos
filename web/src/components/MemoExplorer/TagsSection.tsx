@@ -62,22 +62,23 @@ const TagsSection = (props: Props) => {
         treeMode ? (
           <TagTree tagAmounts={tags} expandSubTags={!!treeAutoExpand} />
         ) : (
-          <div className="w-full flex flex-row justify-start items-center relative flex-wrap gap-x-2 gap-y-1.5">
+          <div className="w-full flex flex-row justify-start items-center gap-2 overflow-x-auto flex-nowrap py-1 px-0.5 -mx-0.5 hide-scrollbar">
             {tags.map(([tag, amount]) => {
               const isActive = getFiltersByFactor("tagSearch").some((filter: MemoFilter) => filter.value === tag);
               return (
                 <div
                   key={tag}
                   className={cn(
-                    "shrink-0 w-auto max-w-full text-sm rounded-md leading-6 flex flex-row justify-start items-center select-none cursor-pointer transition-colors",
+                    "shrink-0 w-auto max-w-full text-sm rounded-full leading-6 flex flex-row justify-start items-center select-none cursor-pointer transition-colors",
+                    "border border-border/70 bg-background/80 px-3 py-1 shadow-sm",
                     "hover:opacity-80",
-                    isActive ? "text-primary" : "text-muted-foreground",
+                    isActive ? "text-primary border-primary/40" : "text-muted-foreground",
                   )}
                   onClick={() => handleTagClick(tag)}
                 >
                   <HashIcon className="w-4 h-auto shrink-0" />
                   <div className="inline-flex flex-nowrap ml-0.5 gap-0.5 max-w-[calc(100%-16px)]">
-                    <span className={cn("truncate", isActive ? "font-medium" : "")}>{tag}</span>
+                    <span className={cn("truncate whitespace-nowrap", isActive ? "font-medium" : "")}>{tag}</span>
                     {amount > 1 && <span className="opacity-60 shrink-0">({amount})</span>}
                   </div>
                 </div>

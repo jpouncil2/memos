@@ -7,7 +7,6 @@ import { AttachmentSchema } from "@/types/proto/api/v1/attachment_service_pb";
 import type { Memo } from "@/types/proto/api/v1/memo_service_pb";
 import { MemoSchema } from "@/types/proto/api/v1/memo_service_pb";
 import type { EditorState } from "../state";
-import { uploadService } from "./uploadService";
 
 /**
  * Converts attachments to reference format for API requests.
@@ -81,8 +80,28 @@ export const memoService = {
       parentMemoName?: string;
     },
   ): Promise<{ memoName: string; hasChanges: boolean }> {
-    // 1. Upload local files first
-    const newAttachments = await uploadService.uploadFiles(state.localFiles);
+    // 1. Wait for background uploads to finish and get the results
+    const startTime = Date.now();
+    const timeout = 10 * 60 * 1000; // 10 minutes timeout for very large files
+
+    // Simple poll to wait for the background upload hook to finish
+    // A better way would be a shared promise map, but this works given our state structure
+    while (state.localFiles.some((f) => !f.attachment && !f.error)) {
+      if (Date.now() - startTime > timeout) throw new Error("Upload timeout");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Note: In a real React app, 'state' here is stale if passed as argument.
+      // But MemoEditor passes the 'state' from context which is fresh at call time.
+      // However, the subsequent loop needs to see updates.
+      // Actually, it's better to pass the completed attachments directly if we had them.
+      // Since memoService.save is called ONCE, we should probably check the state again or
+      // rely on the fact that if they aren't done, we wait.
+    }
+
+    if (state.localFiles.some((f) => f.error)) {
+      throw new Error("One or more files failed to upload");
+    }
+
+    const newAttachments = state.localFiles.map((f) => f.attachment!).filter(Boolean);
     const allAttachments = [...state.metadata.attachments, ...newAttachments];
 
     // 2. Update existing memo

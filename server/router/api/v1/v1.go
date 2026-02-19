@@ -23,9 +23,11 @@ type APIV1Service struct {
 	v1pb.UnimplementedUserServiceServer
 	v1pb.UnimplementedMemoServiceServer
 	v1pb.UnimplementedAttachmentServiceServer
+	v1pb.UnimplementedBoardServiceServer
 	v1pb.UnimplementedShortcutServiceServer
 	v1pb.UnimplementedActivityServiceServer
 	v1pb.UnimplementedIdentityProviderServiceServer
+	v1pb.UnimplementedAIServiceServer
 
 	Secret          string
 	Profile         *profile.Profile
@@ -110,6 +112,9 @@ func (s *APIV1Service) RegisterGateway(ctx context.Context, echoServer *echo.Ech
 	if err := v1pb.RegisterAttachmentServiceHandlerServer(ctx, gwMux, s); err != nil {
 		return err
 	}
+	if err := v1pb.RegisterBoardServiceHandlerServer(ctx, gwMux, s); err != nil {
+		return err
+	}
 	if err := v1pb.RegisterShortcutServiceHandlerServer(ctx, gwMux, s); err != nil {
 		return err
 	}
@@ -117,6 +122,9 @@ func (s *APIV1Service) RegisterGateway(ctx context.Context, echoServer *echo.Ech
 		return err
 	}
 	if err := v1pb.RegisterIdentityProviderServiceHandlerServer(ctx, gwMux, s); err != nil {
+		return err
+	}
+	if err := v1pb.RegisterAIServiceHandlerServer(ctx, gwMux, s); err != nil {
 		return err
 	}
 	gwGroup := echoServer.Group("")

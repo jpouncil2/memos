@@ -1268,6 +1268,8 @@ func (s *APIV1Service) UpdateCardSubtask(ctx context.Context, request *v1pb.Upda
 		case "update_time":
 			updatedTs := time.Now().Unix()
 			update.UpdatedTs = &updatedTs
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "invalid update path: %s", path)
 		}
 	}
 	if update.UpdatedTs == nil {

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebounce } from "react-use";
 import { useReverseGeocoding } from "@/components/map";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useExecuteAIInstruction } from "@/hooks/useAI";
 import type { MemoRelation } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
@@ -162,6 +162,7 @@ const InsertMenu = (props: InsertMenuProps) => {
           </Button>
         </SheetTrigger>
         <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-6 pt-3">
+          <SheetTitle className="sr-only">Insert menu</SheetTitle>
           <div className="grid grid-cols-3 gap-3">
             {menuItems.map((item) => (
               <button

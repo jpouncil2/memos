@@ -28,6 +28,15 @@ export function redirectOnAuthFailure(): void {
 
   const disallowPublicVisibility = getInstanceConfig().memoRelatedSetting.disallowPublicVisibility;
   const target = disallowPublicVisibility ? ROUTES.AUTH : ROUTES.ROOT;
+  const normalizePath = (path: string) => (path.endsWith("/") && path.length > 1 ? path.slice(0, -1) : path);
+  const currentPathNormalized = normalizePath(currentPath);
+  const targetNormalized = normalizePath(target);
+
+  // Prevent full-page reload loops when already at the target route.
+  if (currentPathNormalized === targetNormalized) {
+    clearAccessToken();
+    return;
+  }
 
   // Only redirect if it's a private route or disallowPublicVisibility is enabled
   if (disallowPublicVisibility || isPrivateRoute(currentPath)) {

@@ -106,10 +106,10 @@ func (s *APIV1Service) CreateMemo(ctx context.Context, request *v1pb.CreateMemoR
 	attachments := []*store.Attachment{}
 
 	if len(request.Memo.Attachments) > 0 {
-		_, err := s.SetMemoAttachments(ctx, &v1pb.SetMemoAttachmentsRequest{
+		_, err := s.setMemoAttachmentsInternal(ctx, &v1pb.SetMemoAttachmentsRequest{
 			Name:        fmt.Sprintf("%s%s", MemoNamePrefix, memo.UID),
 			Attachments: request.Memo.Attachments,
-		})
+		}, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to set memo attachments")
 		}
@@ -421,10 +421,10 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 			payload.Location = convertLocationToStore(request.Memo.Location)
 			update.Payload = payload
 		} else if path == "attachments" {
-			_, err := s.SetMemoAttachments(ctx, &v1pb.SetMemoAttachmentsRequest{
+			_, err := s.setMemoAttachmentsInternal(ctx, &v1pb.SetMemoAttachmentsRequest{
 				Name:        request.Memo.Name,
 				Attachments: request.Memo.Attachments,
-			})
+			}, false)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to set memo attachments")
 			}

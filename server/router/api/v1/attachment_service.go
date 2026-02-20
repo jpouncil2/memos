@@ -179,6 +179,11 @@ func (s *APIV1Service) CreateAttachment(ctx context.Context, request *v1pb.Creat
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create attachment: %v", err)
 	}
+	if create.MemoID != nil {
+		if err := s.dispatchMemoUpdatedWebhookByMemoID(ctx, *create.MemoID); err != nil {
+			slog.Warn("Failed to dispatch memo updated webhook after attachment creation", slog.Any("err", err))
+		}
+	}
 
 	return convertAttachmentFromStore(attachment), nil
 }

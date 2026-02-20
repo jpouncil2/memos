@@ -6,18 +6,18 @@ import { YearCalendar } from "@/components/ActivityCalendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateMemo, useMemos, useUpdateMemo } from "@/hooks/useMemoQueries";
 import { cn } from "@/lib/utils";
-import { MemoSchema, Visibility, type Memo } from "@/types/proto/api/v1/memo_service_pb";
-import { useTranslate } from "@/utils/i18n";
-import { countTasks, extractTasks, toggleTaskAtLine, type TaskItem } from "@/utils/markdown-manipulation";
+import { type Memo, MemoSchema, Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import {
   CHECKLIST_RESET_HOUR,
   DAILY_CHECKLIST_TAG,
   DEFAULT_TEMPLATE_CONTENT,
-  TEMPLATE_CHECKLIST_TAG,
   formatChecklistDayKey,
   formatChecklistTitle,
   normalizeDailyChecklistContent,
+  TEMPLATE_CHECKLIST_TAG,
 } from "@/utils/daily-checklist";
+import { useTranslate } from "@/utils/i18n";
+import { countTasks, extractTasks, type TaskItem, toggleTaskAtLine } from "@/utils/markdown-manipulation";
 
 interface ChecklistSection {
   title: string;

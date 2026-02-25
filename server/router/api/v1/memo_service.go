@@ -760,12 +760,46 @@ func (s *APIV1Service) dispatchMemoRelatedWebhook(ctx context.Context, memo *v1p
 			return errors.Wrap(err, "failed to convert memo to webhook payload")
 		}
 		payload.ActivityType = activityType
-		payload.URL = hook.Url
 
-		// Use asynchronous webhook dispatch
-		webhook.PostAsync(payload)
+		for _, targetURL := range getWebhookDispatchTargets(hook.Url) {
+			dispatchPayload := *payload
+			dispatchPayload.URL = targetURL
+			// Use asynchronous webhook dispatch
+			webhook.PostAsync(&dispatchPayload)
+		}
 	}
 	return nil
+}
+
+// getWebhookDispatchTargets expands known webhook patterns for test workflows.
+// For n8n-style routes, dispatch to both test and production endpoints.
+func getWebhookDispatchTargets(rawURL string) []string {
+	url := strings.TrimSpace(rawURL)
+	if url == "" {
+		return nil
+	}
+
+	targets := []string{url}
+	addUnique := func(candidate string) {
+		candidate = strings.TrimSpace(candidate)
+		if candidate == "" {
+			return
+		}
+		for _, existing := range targets {
+			if existing == candidate {
+				return
+			}
+		}
+		targets = append(targets, candidate)
+	}
+
+	if strings.Contains(url, "/webhook-test/") {
+		addUnique(strings.Replace(url, "/webhook-test/", "/webhook/", 1))
+	} else if strings.Contains(url, "/webhook/") {
+		addUnique(strings.Replace(url, "/webhook/", "/webhook-test/", 1))
+	}
+
+	return targets
 }
 
 func convertMemoToWebhookPayload(memo *v1pb.Memo) (*webhook.WebhookRequestPayload, error) {

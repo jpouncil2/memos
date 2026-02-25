@@ -60,12 +60,18 @@ func Post(requestPayload *WebhookRequestPayload) error {
 		return errors.Errorf("failed to post webhook %s, status code: %d, response body: %s", requestPayload.URL, resp.StatusCode, b)
 	}
 
+	// Most webhook providers return plain text, HTML, or custom JSON.
+	// Treat any 2xx response as success by default.
+	if len(bytes.TrimSpace(b)) == 0 {
+		return nil
+	}
+
 	response := &struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
 	}{}
 	if err := json.Unmarshal(b, response); err != nil {
-		return errors.Wrapf(err, "failed to unmarshal webhook response from %s", requestPayload.URL)
+		return nil
 	}
 
 	if response.Code != 0 {

@@ -17,6 +17,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         content: action.payload,
       };
 
+    case "SET_TIMESTAMPS":
+      return {
+        ...state,
+        timestamps: {
+          ...state.timestamps,
+          ...action.payload,
+        },
+      };
+
     case "SET_METADATA":
       return {
         ...state,

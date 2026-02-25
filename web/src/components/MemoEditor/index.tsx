@@ -68,6 +68,10 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
     dispatch(actions.toggleFocusMode());
   };
 
+  const handleCreateTimeChange = (date?: Date) => {
+    dispatch(actions.setTimestamps({ createTime: date }));
+  };
+
   useKeyboard(editorRef, { onSave: handleSave });
 
   async function handleSave() {
@@ -147,13 +151,25 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
             <EditorContent ref={editorRef} placeholder={placeholder} autoFocus={autoFocus} />
             <div className="w-full flex flex-col gap-2">
               <EditorMetadata memoName={memoName} />
-              <EditorToolbar onSave={handleSave} onCancel={onCancel} memoName={memoName} />
+              <EditorToolbar
+                onSave={handleSave}
+                onCancel={onCancel}
+                memoName={memoName}
+                createTime={state.timestamps.createTime}
+                onCreateTimeChange={handleCreateTimeChange}
+              />
             </div>
           </>
         ) : (
           <div className="w-full flex flex-col gap-2">
             <EditorMetadata memoName={memoName} />
-            <EditorToolbar onSave={handleSave} onCancel={onCancel} memoName={memoName}>
+            <EditorToolbar
+              onSave={handleSave}
+              onCancel={onCancel}
+              memoName={memoName}
+              createTime={state.timestamps.createTime}
+              onCreateTimeChange={handleCreateTimeChange}
+            >
               <EditorContent ref={editorRef} placeholder={placeholder} autoFocus={autoFocus} />
             </EditorToolbar>
           </div>

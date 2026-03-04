@@ -26,6 +26,7 @@ export interface MonthCalendarProps {
   maxCount: number;
   size?: CalendarSize;
   onClick?: (date: string) => void;
+  tooltipFormatter?: (count: number, date: string) => string;
   className?: string;
   disableTooltips?: boolean;
 }
@@ -35,5 +36,6 @@ export interface YearCalendarProps {
   data: Record<string, number>;
   onYearChange: (year: number) => void;
   onDateClick: (date: string) => void;
+  tooltipFormatter?: (count: number, date: string) => string;
   className?: string;
 }

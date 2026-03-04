@@ -3,9 +3,7 @@ FROM node:22-alpine AS frontend
 WORKDIR /web
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY web/package.json web/pnpm-lock.yaml ./
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm config set store-dir /pnpm/store && \
-    pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 COPY web/ .
 COPY proto/ /proto
 ARG NODE_OPTIONS="--max-old-space-size=1536"
@@ -16,14 +14,11 @@ FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS backend
 WORKDIR /backend-build
 RUN apk add --no-cache git ca-certificates
 COPY go.mod go.sum ./
-RUN --mount=type=cache,id=gomod-cache,target=/go/pkg/mod \
-    go mod download
+RUN go mod download
 COPY . .
 COPY --from=frontend /server/router/frontend/dist ./server/router/frontend/dist
 ARG TARGETOS TARGETARCH
-RUN --mount=type=cache,id=gomod-cache,target=/go/pkg/mod \
-    --mount=type=cache,id=gobuild-cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build \
     -trimpath \
     -ldflags="-s -w -extldflags '-static'" \

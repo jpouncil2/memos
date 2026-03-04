@@ -53,6 +53,8 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 
 // RegisterGateway registers the gRPC-Gateway and Connect handlers with the given Echo instance.
 func (s *APIV1Service) RegisterGateway(ctx context.Context, echoServer *echo.Echo) error {
+	s.registerUserWebhookTestRoute(echoServer)
+
 	// Auth middleware for gRPC-Gateway - runs after routing, has access to method name.
 	// Uses the same PublicMethods config as the Connect AuthInterceptor.
 	authenticator := auth.NewAuthenticator(s.Store, s.Secret)

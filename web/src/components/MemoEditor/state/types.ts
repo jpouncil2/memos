@@ -33,6 +33,7 @@ export interface EditorState {
 export type EditorAction =
   | { type: "INIT_MEMO"; payload: { content: string; metadata: EditorState["metadata"]; timestamps: EditorState["timestamps"] } }
   | { type: "UPDATE_CONTENT"; payload: string }
+  | { type: "SET_TIMESTAMPS"; payload: Partial<EditorState["timestamps"]> }
   | { type: "SET_METADATA"; payload: Partial<EditorState["metadata"]> }
   | { type: "ADD_ATTACHMENT"; payload: Attachment }
   | { type: "REMOVE_ATTACHMENT"; payload: string }

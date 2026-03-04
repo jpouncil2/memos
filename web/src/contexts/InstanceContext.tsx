@@ -1,4 +1,5 @@
 import { create } from "@bufbuild/protobuf";
+import { Code, ConnectError } from "@connectrpc/connect";
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { instanceServiceClient } from "@/connect";
 import { updateInstanceConfig } from "@/instance-config";
@@ -39,6 +40,20 @@ interface InstanceContextValue extends InstanceState {
 }
 
 const InstanceContext = createContext<InstanceContextValue | null>(null);
+
+const shouldSilenceInitializeError = (error: unknown): boolean => {
+  if (error instanceof ConnectError) {
+    // During auth redirect/refresh failure, parallel initialization requests can fail.
+    // Treat auth/network-abort-style failures as expected and avoid noisy console errors.
+    if (error.code === Code.Unauthenticated) {
+      return true;
+    }
+    if (error.code === Code.Unknown && error.rawMessage === "Failed to fetch") {
+      return true;
+    }
+  }
+  return false;
+};
 
 export function InstanceProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<InstanceState>({
@@ -99,7 +114,9 @@ export function InstanceProvider({ children }: { children: ReactNode }) {
         isLoading: false,
       });
     } catch (error) {
-      console.error("Failed to initialize instance:", error);
+      if (!shouldSilenceInitializeError(error)) {
+        console.error("Failed to initialize instance:", error);
+      }
       setState((prev) => ({
         ...prev,
         isInitialized: true,

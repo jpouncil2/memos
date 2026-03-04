@@ -31,7 +31,7 @@ const MemoExplorerDrawer = (props: Props) => {
       </SheetTrigger>
       <SheetContent side="right" className="w-80 max-w-full bg-background">
         <SheetHeader>
-          <SheetTitle />
+          <SheetTitle className="sr-only">Memo explorer</SheetTitle>
         </SheetHeader>
         <MemoExplorer className="px-4" context={context} features={features} statisticsData={statisticsData} tagCount={tagCount} />
       </SheetContent>

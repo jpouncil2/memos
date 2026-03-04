@@ -1,12 +1,22 @@
 import type { FC } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useTranslate } from "@/utils/i18n";
 import { validationService } from "../services";
 import { useEditorContext } from "../state";
 import InsertMenu from "../Toolbar/InsertMenu";
 import type { EditorToolbarProps } from "../types";
 
-export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoName, children }) => {
+const formatForInput = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoName, createTime, onCreateTimeChange, children }) => {
   const t = useTranslate();
   const { state, actions, dispatch } = useEditorContext();
   const { valid } = validationService.canSave(state);
@@ -18,9 +28,46 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoNa
     Boolean(state.metadata.location);
 
   const isSaving = state.ui.isLoading.saving;
+  const createdAtValue = createTime ? formatForInput(createTime) : "";
 
   const handleLocationChange = (location: typeof state.metadata.location) => {
     dispatch(actions.setMetadata({ location }));
+  };
+
+  const handleCreateTimeInputChange = (value: string) => {
+    if (!onCreateTimeChange) {
+      return;
+    }
+    if (!value) {
+      onCreateTimeChange(undefined);
+      return;
+    }
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      onCreateTimeChange(date);
+    }
+  };
+
+  const renderCreateTimeField = () => {
+    if (!onCreateTimeChange) {
+      return null;
+    }
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">{t("common.created-at")}</span>
+        <Input
+          type="datetime-local"
+          value={createdAtValue}
+          onChange={(event) => handleCreateTimeInputChange(event.target.value)}
+          className="h-8 w-[220px]"
+        />
+        {createTime && (
+          <Button variant="ghost" size="sm" onClick={() => onCreateTimeChange(undefined)} disabled={isSaving}>
+            {t("common.clear")}
+          </Button>
+        )}
+      </div>
+    );
   };
 
   const handleToggleFocusMode = () => {
@@ -48,18 +95,21 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoNa
           </div>
         </div>
 
-        <div className="flex flex-row justify-end items-center gap-2">
-          {onCancel && (
-            <Button variant="ghost" onClick={onCancel} disabled={isSaving}>
-              {t("common.cancel")}
-            </Button>
-          )}
+        <div className="flex flex-row justify-between items-center gap-2">
+          {renderCreateTimeField()}
+          <div className="flex flex-row justify-end items-center gap-2">
+            {onCancel && (
+              <Button variant="ghost" onClick={onCancel} disabled={isSaving}>
+                {t("common.cancel")}
+              </Button>
+            )}
 
-          {hasDraft && (
-            <Button onClick={onSave} disabled={!valid || isSaving}>
-              {isSaving ? t("editor.saving") : t("editor.save")}
-            </Button>
-          )}
+            {hasDraft && (
+              <Button onClick={onSave} disabled={!valid || isSaving}>
+                {isSaving ? t("editor.saving") : t("editor.save")}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -78,6 +128,7 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({ onSave, onCancel, memoNa
       </div>
 
       <div className="flex flex-row justify-end items-center gap-2">
+        {renderCreateTimeField()}
         {onCancel && (
           <Button variant="ghost" onClick={onCancel} disabled={isSaving}>
             {t("common.cancel")}

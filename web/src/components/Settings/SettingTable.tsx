@@ -14,6 +14,8 @@ interface SettingTableProps<T = Record<string, unknown>> {
   emptyMessage?: string;
   className?: string;
   getRowKey?: (row: T, index: number) => string;
+  isRowExpanded?: (row: T, index: number) => boolean;
+  renderExpandedRow?: (row: T, index: number) => React.ReactNode;
 }
 
 const SettingTable = <T extends Record<string, unknown>>({
@@ -22,6 +24,8 @@ const SettingTable = <T extends Record<string, unknown>>({
   emptyMessage = "No data",
   className,
   getRowKey,
+  isRowExpanded,
+  renderExpandedRow,
 }: SettingTableProps<T>) => {
   return (
     <div className={cn("w-full overflow-x-auto", className)}>
@@ -46,18 +50,32 @@ const SettingTable = <T extends Record<string, unknown>>({
             ) : (
               data.map((row, rowIndex) => {
                 const rowKey = getRowKey ? getRowKey(row, rowIndex) : rowIndex.toString();
+                const expanded = isRowExpanded ? isRowExpanded(row, rowIndex) : false;
+                const expandedContent = expanded && renderExpandedRow ? renderExpandedRow(row, rowIndex) : null;
                 return (
-                  <tr key={rowKey}>
-                    {columns.map((column) => {
-                      const value = row[column.key as keyof T] as T[keyof T];
-                      const content = column.render ? column.render(value, row) : (value as React.ReactNode);
-                      return (
-                        <td key={column.key} className={cn("whitespace-nowrap px-3 py-2 text-sm text-muted-foreground", column.className)}>
-                          {content}
+                  <React.Fragment key={rowKey}>
+                    <tr>
+                      {columns.map((column) => {
+                        const value = row[column.key as keyof T] as T[keyof T];
+                        const content = column.render ? column.render(value, row) : (value as React.ReactNode);
+                        return (
+                          <td
+                            key={column.key}
+                            className={cn("whitespace-nowrap px-3 py-2 text-sm text-muted-foreground", column.className)}
+                          >
+                            {content}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    {expandedContent && (
+                      <tr>
+                        <td colSpan={columns.length} className="px-3 py-2 text-sm text-muted-foreground bg-muted/30">
+                          {expandedContent}
                         </td>
-                      );
-                    })}
-                  </tr>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })
             )}

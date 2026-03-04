@@ -8,8 +8,7 @@ import Home from "@/pages/Home";
 const AdminSignIn = lazy(() => import("@/pages/AdminSignIn"));
 const Archived = lazy(() => import("@/pages/Archived"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
-const Explore = lazy(() => import("@/pages/Explore"));
-const Inboxes = lazy(() => import("@/pages/Inboxes"));
+const DailyChecklist = lazy(() => import("@/pages/DailyChecklist"));
 const MemoDetail = lazy(() => import("@/pages/MemoDetail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const PermissionDenied = lazy(() => import("@/pages/PermissionDenied"));
@@ -50,16 +49,15 @@ const router = createBrowserRouter([
             element: <MainLayout />,
             children: [
               { path: "", element: <Home /> },
-              { path: Routes.EXPLORE, element: <Explore /> },
               { path: Routes.ARCHIVED, element: <Archived /> },
               { path: "u/:username", element: <UserProfile /> },
             ],
           },
           { path: Routes.ATTACHMENTS, element: <Attachments /> },
           { path: Routes.LIBRARY, element: <Library /> },
+          { path: Routes.CHECKLIST, element: <DailyChecklist /> },
           { path: Routes.BOARDS, element: <Board /> },
           { path: Routes.AGENTS, element: <Agents /> },
-          { path: Routes.INBOX, element: <Inboxes /> },
           { path: Routes.SETTING, element: <Setting /> },
           { path: "memos/:uid", element: <MemoDetail /> },
           { path: "403", element: <PermissionDenied /> },

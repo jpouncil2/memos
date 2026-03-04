@@ -3,6 +3,7 @@ export const ROUTES = {
   LIBRARY: "/library",
   ATTACHMENTS: "/attachments",
   AGENTS: "/agents",
+  CHECKLIST: "/checklist",
   INBOX: "/inbox",
   ARCHIVED: "/archived",
   BOARDS: "/boards",

@@ -14,6 +14,11 @@ export const editorActions = {
     payload: content,
   }),
 
+  setTimestamps: (timestamps: Partial<EditorState["timestamps"]>): EditorAction => ({
+    type: "SET_TIMESTAMPS",
+    payload: timestamps,
+  }),
+
   setMetadata: (metadata: Partial<EditorState["metadata"]>): EditorAction => ({
     type: "SET_METADATA",
     payload: metadata,

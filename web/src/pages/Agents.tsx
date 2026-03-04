@@ -86,7 +86,14 @@ const Agents = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Webhook error (${response.status})`);
+        let message = `Webhook error (${response.status})`;
+        try {
+          const errBody = (await response.json()) as { error?: string; message?: string };
+          message = errBody.error || errBody.message || message;
+        } catch {
+          // Keep default message when response body is not JSON.
+        }
+        throw new Error(message);
       }
 
       const data = (await response.json()) as DigestResponse;

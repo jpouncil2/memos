@@ -27,7 +27,7 @@ const NavigationDrawer = () => {
       </SheetTrigger>
       <SheetContent side="left" className="w-80 max-w-full overflow-auto px-2 bg-background">
         <SheetHeader>
-          <SheetTitle />
+          <SheetTitle className="sr-only">Navigation menu</SheetTitle>
         </SheetHeader>
         <Navigation className="pb-4" />
       </SheetContent>

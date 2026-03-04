@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -206,28 +207,34 @@ func convertInstanceSettingFromRaw(instanceSettingRaw *InstanceSetting) (*storep
 	instanceSetting := &storepb.InstanceSetting{
 		Key: storepb.InstanceSettingKey(storepb.InstanceSettingKey_value[instanceSettingRaw.Name]),
 	}
+	// Some legacy rows can have empty or null JSON values.
+	// Treat those as zero-value settings so callers can apply defaults.
+	value := strings.TrimSpace(instanceSettingRaw.Value)
+	if value == "" || value == "null" {
+		value = "{}"
+	}
 	switch instanceSettingRaw.Name {
 	case storepb.InstanceSettingKey_BASIC.String():
 		basicSetting := &storepb.InstanceBasicSetting{}
-		if err := protojsonUnmarshaler.Unmarshal([]byte(instanceSettingRaw.Value), basicSetting); err != nil {
+		if err := protojsonUnmarshaler.Unmarshal([]byte(value), basicSetting); err != nil {
 			return nil, err
 		}
 		instanceSetting.Value = &storepb.InstanceSetting_BasicSetting{BasicSetting: basicSetting}
 	case storepb.InstanceSettingKey_GENERAL.String():
 		generalSetting := &storepb.InstanceGeneralSetting{}
-		if err := protojsonUnmarshaler.Unmarshal([]byte(instanceSettingRaw.Value), generalSetting); err != nil {
+		if err := protojsonUnmarshaler.Unmarshal([]byte(value), generalSetting); err != nil {
 			return nil, err
 		}
 		instanceSetting.Value = &storepb.InstanceSetting_GeneralSetting{GeneralSetting: generalSetting}
 	case storepb.InstanceSettingKey_STORAGE.String():
 		storageSetting := &storepb.InstanceStorageSetting{}
-		if err := protojsonUnmarshaler.Unmarshal([]byte(instanceSettingRaw.Value), storageSetting); err != nil {
+		if err := protojsonUnmarshaler.Unmarshal([]byte(value), storageSetting); err != nil {
 			return nil, err
 		}
 		instanceSetting.Value = &storepb.InstanceSetting_StorageSetting{StorageSetting: storageSetting}
 	case storepb.InstanceSettingKey_MEMO_RELATED.String():
 		memoRelatedSetting := &storepb.InstanceMemoRelatedSetting{}
-		if err := protojsonUnmarshaler.Unmarshal([]byte(instanceSettingRaw.Value), memoRelatedSetting); err != nil {
+		if err := protojsonUnmarshaler.Unmarshal([]byte(value), memoRelatedSetting); err != nil {
 			return nil, err
 		}
 		instanceSetting.Value = &storepb.InstanceSetting_MemoRelatedSetting{MemoRelatedSetting: memoRelatedSetting}

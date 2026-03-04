@@ -81,6 +81,7 @@ const SheetContent = React.forwardRef<
         }}
         {...props}
       >
+        <SheetPrimitive.Title className="sr-only">Sheet</SheetPrimitive.Title>
         {children}
         <SheetPrimitive.Close className="ring-offset-background data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-60 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
           <XIcon className="size-5" />
